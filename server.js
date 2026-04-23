@@ -66,17 +66,23 @@ app.post('/ups-rates', async (req, res) => {
       async: false
     };
  
-    const response = await fetch('https://api.goshippo.com/shipments/', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'ShippoToken ' + SHIPPO_TOKEN,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(shipment)
-    });
- 
-    const data = await response.json();
-    if (!response.ok) return res.status(response.status).json({ error: data });
+    let data, response;
+    // Retry up to 3 times if rates come back empty — Shippo sometimes needs a moment
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetch('https://api.goshippo.com/shipments/', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'ShippoToken ' + SHIPPO_TOKEN,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(shipment)
+      });
+      data = await response.json();
+      if (!response.ok) return res.status(response.status).json({ error: data });
+      const upsRates = (data.rates || []).filter(r => r.provider === 'UPS');
+      if (upsRates.length > 0) break;
+      if (attempt < 2) await new Promise(r => setTimeout(r, 2000));
+    }
  
     const UPS_SERVICES = {
       'ups_ground': 'UPS Ground',

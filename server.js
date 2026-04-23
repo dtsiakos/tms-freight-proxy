@@ -22,8 +22,10 @@ app.post('/login', async (req, res) => {
       body: JSON.stringify({ userName: TMS_USER, password: TMS_PASS, srvToken: req.body.srvToken || '' })
     });
     const data = await response.text();
+    console.log('TMS Login status:', response.status, 'body:', data.slice(0, 300));
     res.status(response.status).send(data);
   } catch (err) {
+    console.log('TMS Login error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

@@ -9,9 +9,9 @@
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
   .container { max-width: 620px; margin: 0 auto; }
   .header { margin-bottom: 1.5rem; }
-  .header h1 { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+  .header h1 { font-size: 22px; font-weight: 600; }
   .header p { font-size: 14px; color: #666; margin-top: 4px; }
-  .logo { font-size: 13px; font-weight: 600; color: #1a1a1a; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .logo { font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
   .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
   .sec-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -71,11 +71,6 @@
   .api-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border-radius: 20px; padding: 4px 10px; margin-bottom: 14px; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-weight: 500; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; }
   .raw-response { font-size: 12px; color: #666; background: #f5f5f5; border-radius: 8px; padding: 10px 12px; font-family: monospace; word-break: break-all; margin-top: 8px; white-space: pre-wrap; }
-  @media (max-width: 480px) {
-    .grid2, .grid3 { grid-template-columns: 1fr 1fr; }
-    .grid3 { grid-template-columns: 1fr 1fr 1fr; }
-    .acc-grid { grid-template-columns: 1fr; }
-  }
 </style>
 </head>
 <body>
@@ -102,7 +97,6 @@
       <span class="spec-tag" id="tagD"></span>
       <span class="loaded-tag" id="tagOk">Specs loaded</span>
     </div>
-
     <div class="divider"></div>
     <div class="sec-label">Shipment</div>
     <div class="grid2" style="margin-bottom:10px;">
@@ -116,7 +110,6 @@
         <input type="text" id="destZip" placeholder="e.g. 75093" maxlength="5" />
       </div>
     </div>
-
     <div class="divider"></div>
     <div class="sec-label">Product details</div>
     <div class="grid3" style="margin-bottom:10px;">
@@ -139,7 +132,6 @@
       <div class="field"><label>Width (in)</label><input type="text" id="dimW" readonly placeholder="—" /></div>
       <div class="field"><label>Height (in)</label><input type="text" id="dimH" readonly placeholder="—" /></div>
     </div>
-
     <div class="divider"></div>
     <div class="sec-label">Accessorials</div>
     <div class="acc-grid">
@@ -148,7 +140,6 @@
       <div class="acc-item" data-val="INDEL"><div class="chk"></div>Inside delivery</div>
       <div class="acc-item" data-val="NOTDEL"><div class="chk"></div>Notification prior to delivery</div>
     </div>
-
     <div class="error" id="errBox"></div>
     <div class="status-bar" id="statusBar"><div class="spinner"></div><span id="statusText">Connecting...</span></div>
     <button class="btn" id="quoteBtn">Get freight quotes</button>
@@ -194,7 +185,7 @@ function onType() {
   hits.forEach(item => {
     const d = document.createElement('div');
     d.className = 'dd-item';
-    d.innerHTML = `<span>${item.model}</span><span class="dd-hint">${item.weight} lbs · ${item.dims}"</span>`;
+    d.innerHTML = '<span>' + item.model + '</span><span class="dd-hint">' + item.weight + ' lbs · ' + item.dims + '"</span>';
     d.addEventListener('mousedown', () => pick(item));
     dd.appendChild(d);
   });
@@ -270,7 +261,6 @@ async function getQuotes() {
       st.textContent = 'Authenticating with TMS...';
       authToken = await getToken();
     }
-
     st.textContent = 'Fetching your contracted rates...';
 
     const payload = {
@@ -331,13 +321,13 @@ function renderResults(data, orig, dest, model, weight, fclass) {
   }
 
   if (!quotes.length) {
-    list.innerHTML = '<div style="font-size:13px;color:#666;padding:12px;background:#f9f9f9;border-radius:8px;">No rates returned for this lane. Try adjusting freight class or contact your 3PL.</div>';
+    list.innerHTML = '<div style="font-size:13px;color:#666;padding:12px;background:#f9f9f9;border-radius:8px;">No rates returned. Try adjusting freight class or contact your 3PL.</div>';
     document.getElementById('resultsBox').classList.add('show');
     return;
   }
 
   quotes.sort((a,b) => (a.TotalCharge||a.GrossCharge||0) - (b.TotalCharge||b.GrossCharge||0));
-  meta.textContent = `${orig} → ${dest} · ${quotes.length} carrier${quotes.length!==1?'s':''}`;
+  meta.textContent = orig + ' → ' + dest + ' · ' + quotes.length + ' carrier' + (quotes.length !== 1 ? 's' : '');
 
   quotes.forEach((q, i) => {
     const carrier = q.CarrierName||q.carrierName||q.Carrier||'—';
@@ -351,20 +341,20 @@ function renderResults(data, orig, dest, model, weight, fclass) {
     const card = document.createElement('div');
     card.className = 'quote-card' + (i===0?' best':'');
     let bd = '';
-    if (gross) bd += `Gross $${gross.toFixed(2)}`;
-    if (discount) bd += ` · Disc -$${Math.abs(discount).toFixed(2)}`;
-    if (fuel) bd += ` · Fuel $${fuel.toFixed(2)}`;
-    card.innerHTML = `
-      <div class="carrier-badge">${initials}</div>
-      <div>
-        <div class="carrier-name">${carrier}${i===0?'<span class="badge-best">lowest</span>':''}</div>
-        <div class="carrier-sub">${service}${transit?' · '+transit+(transit===1?' day':' days'):''}</div>
-        ${bd?`<div class="carrier-breakdown">${bd}</div>`:''}
-      </div>
-      <div class="price-col">
-        <div class="price-total">$${total.toFixed(2)}</div>
-        <div class="price-label">estimate</div>
-      </div>`;
+    if (gross) bd += 'Gross $' + gross.toFixed(2);
+    if (discount) bd += ' · Disc -$' + Math.abs(discount).toFixed(2);
+    if (fuel) bd += ' · Fuel $' + fuel.toFixed(2);
+    card.innerHTML =
+      '<div class="carrier-badge">' + initials + '</div>' +
+      '<div>' +
+        '<div class="carrier-name">' + carrier + (i===0?'<span class="badge-best">lowest</span>':'') + '</div>' +
+        '<div class="carrier-sub">' + service + (transit?' · '+transit+(transit===1?' day':' days'):'') + '</div>' +
+        (bd?'<div class="carrier-breakdown">'+bd+'</div>':'') +
+      '</div>' +
+      '<div class="price-col">' +
+        '<div class="price-total">$' + total.toFixed(2) + '</div>' +
+        '<div class="price-label">contracted rate</div>' +
+      '</div>';
     list.appendChild(card);
   });
   document.getElementById('resultsBox').classList.add('show');

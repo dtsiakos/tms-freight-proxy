@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -8,6 +9,7 @@ const TMS_BASE = 'https://restapiv7.tmssaas.com';
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/login', async (req, res) => {
   try {
@@ -28,7 +30,11 @@ app.post('/rates', async (req, res) => {
     const token = req.headers['usertoken'] || '';
     const response = await fetch(TMS_BASE + '/ShipmentLiteService/GetLTLRates', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'UserToken': token },
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'UserToken': token
+      },
       body: JSON.stringify(req.body)
     });
     const data = await response.text();

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Univex Freight Quote Tool</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+  .container { max-width: 620px; margin: 0 auto; }
+  .header { margin-bottom: 1.5rem; }
+  .header h1 { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+  .header p { font-size: 14px; color: #666; margin-top: 4px; }
+  .logo { font-size: 13px; font-weight: 600; color: #1a1a1a; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .sec-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
+  input, select { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #fff; color: #1a1a1a; font-family: inherit; transition: border-color 0.15s; appearance: none; }
+  input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  input[readonly] { background: #f9f9f9; color: #666; cursor: default; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+  .model-wrap { position: relative; }
+  .dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; margin-top: 3px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .dd-item { padding: 9px 12px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
+  .dd-item:last-child { border-bottom: none; }
+  .dd-item:hover, .dd-item.hi { background: #f5f7ff; }
+  .dd-hint { font-size: 11px; color: #999; }
+  .specs-row { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
+  .spec-tag { font-size: 12px; background: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 20px; padding: 3px 10px; color: #666; display: none; }
+  .spec-tag.show { display: inline-block; }
+  .loaded-tag { font-size: 12px; color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 20px; padding: 3px 10px; display: none; }
+  .loaded-tag.show { display: inline-block; }
+  .divider { border: none; border-top: 1px solid #f0f0f0; margin: 1rem 0; }
+  .acc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .acc-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; cursor: pointer; padding: 8px 10px; border: 1px solid #e5e5e5; border-radius: 8px; user-select: none; transition: all 0.12s; }
+  .acc-item:hover { background: #f5f7ff; border-color: #bfdbfe; }
+  .acc-item.checked { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+  .acc-item.checked .chk { background: #2563eb; border-color: #2563eb; }
+  .acc-item.checked .chk::after { display: block; }
+  .chk { width: 15px; height: 15px; border: 1.5px solid #ccc; border-radius: 3px; flex-shrink: 0; position: relative; background: #fff; transition: all 0.12s; }
+  .chk::after { content: ''; display: none; position: absolute; left: 4px; top: 1px; width: 5px; height: 8px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(45deg); }
+  .btn { width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 14px; transition: background 0.15s; }
+  .btn:hover { background: #333; }
+  .btn:disabled { background: #ccc; cursor: not-allowed; }
+  .origin-note { font-size: 11px; color: #2563eb; margin-top: 3px; }
+  .error { font-size: 13px; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; margin-top: 10px; display: none; line-height: 1.5; }
+  .status-bar { display: none; align-items: center; gap: 10px; font-size: 13px; color: #555; background: #f9f9f9; border-radius: 8px; padding: 10px 13px; margin-top: 10px; }
+  .status-bar.show { display: flex; }
+  .spinner { width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .results { display: none; margin-top: 0; }
+  .results.show { display: block; }
+  .results-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
+  .results-title { font-size: 15px; font-weight: 600; }
+  .results-meta { font-size: 12px; color: #999; }
+  .quote-card { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e5e5e5; border-radius: 10px; margin-bottom: 8px; background: #fff; }
+  .quote-card.best { border: 2px solid #2563eb; background: #eff6ff; }
+  .carrier-badge { width: 42px; height: 42px; border-radius: 8px; background: #f5f5f5; border: 1px solid #e5e5e5; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #666; text-align: center; line-height: 1.2; flex-shrink: 0; }
+  .quote-card.best .carrier-badge { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+  .carrier-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .carrier-sub { font-size: 12px; color: #888; margin-top: 2px; }
+  .carrier-breakdown { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .price-col { text-align: right; white-space: nowrap; }
+  .price-total { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .price-label { font-size: 11px; color: #aaa; margin-top: 1px; }
+  .badge-best { display: inline-block; font-size: 10px; font-weight: 600; background: #2563eb; color: #fff; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
+  .notice { font-size: 12px; color: #999; padding: 10px 14px; background: #fafafa; border-radius: 8px; line-height: 1.6; border-left: 3px solid #e5e5e5; margin-top: 1rem; }
+  .api-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border-radius: 20px; padding: 4px 10px; margin-bottom: 14px; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-weight: 500; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; }
+  .raw-response { font-size: 12px; color: #666; background: #f5f5f5; border-radius: 8px; padding: 10px 12px; font-family: monospace; word-break: break-all; margin-top: 8px; white-space: pre-wrap; }
+  @media (max-width: 480px) {
+    .grid2, .grid3 { grid-template-columns: 1fr 1fr; }
+    .grid3 { grid-template-columns: 1fr 1fr 1fr; }
+    .acc-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">Univex Corp</div>
+    <h1>Freight quote tool</h1>
+    <p>Select a model and destination to get contracted carrier rates</p>
+  </div>
+
+  <div class="api-badge"><div class="dot"></div>Live — TMS contracted rates</div>
+
+  <div class="card">
+    <div class="sec-label">Equipment</div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>Model number</label>
+      <div class="model-wrap" id="modelWrap">
+        <input type="text" id="modelInput" placeholder="Type to search — e.g. SRM60+, SL120, MG42..." autocomplete="off" />
+        <div class="dropdown" id="dd"></div>
+      </div>
+    </div>
+    <div class="specs-row">
+      <span class="spec-tag" id="tagW"></span>
+      <span class="spec-tag" id="tagD"></span>
+      <span class="loaded-tag" id="tagOk">Specs loaded</span>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">Shipment</div>
+    <div class="grid2" style="margin-bottom:10px;">
+      <div class="field">
+        <label>Origin zip</label>
+        <input type="text" id="origZip" value="03079" maxlength="5" />
+        <div class="origin-note" id="origNote">Salem, NH (default)</div>
+      </div>
+      <div class="field">
+        <label>Destination zip</label>
+        <input type="text" id="destZip" placeholder="e.g. 75093" maxlength="5" />
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">Product details</div>
+    <div class="grid3" style="margin-bottom:10px;">
+      <div class="field"><label>Weight (lbs)</label><input type="text" id="weight" readonly placeholder="—" /></div>
+      <div class="field">
+        <label>Freight class</label>
+        <select id="fclass">
+          <option value="50">50</option><option value="55">55</option><option value="60">60</option>
+          <option value="65">65</option><option value="70">70</option><option value="77.5">77.5</option>
+          <option value="85">85</option><option value="92.5">92.5</option><option value="100">100</option>
+          <option value="110">110</option><option value="125">125</option><option value="150" selected>150</option>
+          <option value="175">175</option><option value="200">200</option><option value="250">250</option>
+          <option value="300">300</option><option value="400">400</option><option value="500">500</option>
+        </select>
+      </div>
+      <div class="field"><label>Pallets</label><input type="number" id="pallets" value="1" min="1" /></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Length (in)</label><input type="text" id="dimL" readonly placeholder="—" /></div>
+      <div class="field"><label>Width (in)</label><input type="text" id="dimW" readonly placeholder="—" /></div>
+      <div class="field"><label>Height (in)</label><input type="text" id="dimH" readonly placeholder="—" /></div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">Accessorials</div>
+    <div class="acc-grid">
+      <div class="acc-item" data-val="LGDEL"><div class="chk"></div>Liftgate delivery</div>
+      <div class="acc-item" data-val="LACDEL"><div class="chk"></div>Limited access</div>
+      <div class="acc-item" data-val="INDEL"><div class="chk"></div>Inside delivery</div>
+      <div class="acc-item" data-val="NOTDEL"><div class="chk"></div>Notification prior to delivery</div>
+    </div>
+
+    <div class="error" id="errBox"></div>
+    <div class="status-bar" id="statusBar"><div class="spinner"></div><span id="statusText">Connecting...</span></div>
+    <button class="btn" id="quoteBtn">Get freight quotes</button>
+  </div>
+
+  <div class="results" id="resultsBox">
+    <div class="results-header">
+      <span class="results-title">Carrier rates</span>
+      <span class="results-meta" id="resultsMeta"></span>
+    </div>
+    <div id="quoteList"></div>
+  </div>
+
+  <div class="notice">For reference only — no freight can be booked through this tool. Confirm final rates with the carrier before committing to a customer price.</div>
+</div>
+
+<script>
+const EQ = [{"model":"SRM12+","weight":220,"dims":"41x33x22"},{"model":"SRM20+","weight":254,"dims":"41x33x22"},{"model":"SRMF20+","weight":284,"dims":"56x36x33"},{"model":"SRM30+","weight":400,"dims":"56x36x33"},{"model":"SRM40+","weight":400,"dims":"58x36x33"},{"model":"SRM60+","weight":1000,"dims":"66x41x51"},{"model":"SRM60+PM","weight":1000,"dims":"66x41x51"},{"model":"SRM60+HD","weight":1000,"dims":"66x41x51"},{"model":"SRM80+","weight":1000,"dims":"66x41x51"},{"model":"SL50","weight":548,"dims":"59x31x32"},{"model":"SL80","weight":838,"dims":"67x31x50"},{"model":"SL120","weight":1190,"dims":"67.3x33x53"},{"model":"SL160","weight":1631,"dims":"69x41x63"},{"model":"SL200","weight":1764,"dims":"69x51x79"},{"model":"SL280","weight":1940,"dims":"69x55x87"},{"model":"SL80RB","weight":1521,"dims":"79x41x73"},{"model":"SL120RB","weight":1543,"dims":"79x41x73"},{"model":"SL160RB","weight":2350,"dims":"68x88x66"},{"model":"SL200RB","weight":2460,"dims":"68x88x66"},{"model":"SL250RB","weight":2550,"dims":"71x42x77"},{"model":"SL300RB","weight":2550,"dims":"71x42x77"},{"model":"4612","weight":59,"dims":"21x27x23"},{"model":"6612M","weight":86,"dims":"21x27x23"},{"model":"8713M","weight":130,"dims":"25x22x33"},{"model":"8713S","weight":189,"dims":"25x22x33"},{"model":"1000M","weight":131,"dims":"29x25x30"},{"model":"1000S","weight":163,"dims":"29x25x30"},{"model":"PM91","weight":92,"dims":"24x19x26"},{"model":"PM91G","weight":92,"dims":"24x19x26"},{"model":"VS9","weight":27,"dims":"19x13x13"},{"model":"VS9H","weight":25,"dims":"19x13x13"},{"model":"ALMFC12","weight":12,"dims":"8x16x16"},{"model":"MG8912","weight":108,"dims":"24x18x25"},{"model":"MG22","weight":167,"dims":"27x36x23"},{"model":"MG32","weight":223,"dims":"42x38x78"},{"model":"MG42","weight":302,"dims":"42x38x78"},{"model":"MT975","weight":99,"dims":"31x23x29"},{"model":"BC14","weight":91,"dims":"18x32x25"},{"model":"BC18","weight":186,"dims":"28x39x32"},{"model":"G-peeler","weight":88,"dims":"31x22x24"},{"model":"1404","weight":15,"dims":"16x15x15"},{"model":"1405","weight":15,"dims":"16x15x15"},{"model":"1406","weight":16,"dims":"16x15x15"},{"model":"FA73","weight":10,"dims":"12x12x12"},{"model":"VP40N21","weight":145,"dims":"30.3x25.4x29.7"},{"model":"VP50N21","weight":189,"dims":"29.5x34.3x33.1"},{"model":"SVC13","weight":12,"dims":"13x18x10"},{"model":"Cyclone360","weight":7,"dims":"5.9x13x17.3"},{"model":"Vortex750","weight":10,"dims":"5.9x13x17.3"},{"model":"ppress1R","weight":37,"dims":"13x12.6x19.3"},{"model":"ppress1F","weight":37,"dims":"13x12.6x19.3"},{"model":"ppress1RF","weight":37,"dims":"13x12.6x19.3"},{"model":"ppress1.5R","weight":51,"dims":"10.6x16.5x16.9"},{"model":"ppress1.5F","weight":51,"dims":"10.6x16.5x16.9"},{"model":"ppress1.5RF","weight":51,"dims":"10.6x16.5x16.9"},{"model":"ppress2R","weight":66,"dims":"10.6x16.9x22"},{"model":"ppress2F","weight":66,"dims":"10.6x16.9x22"},{"model":"ppress2RF","weight":66,"dims":"10.6x16.9x22"},{"model":"UFP13","weight":57,"dims":"19.7x13.8x28.3"},{"model":"Upasta","weight":135,"dims":"30x22x32"},{"model":"SG5000","weight":115,"dims":"33x33x30"},{"model":"sprizza40","weight":345,"dims":"40x34x38"},{"model":"sprizza50","weight":441,"dims":"42x33x35"},{"model":"DR11/14","weight":392,"dims":"46x33x39"},{"model":"DR350","weight":440,"dims":"38.5x33x46"},{"model":"ABDR","weight":563,"dims":"65x29.5x29.5"},{"model":"SBDR","weight":437,"dims":"65x29.5x29.5"},{"model":"MRD","weight":440,"dims":"57x29.5x29.5"},{"model":"SRD","weight":532,"dims":"57x29.5x29.5"},{"model":"ARD","weight":532,"dims":"57x29.5x29.5"},{"model":"MQD","weight":440,"dims":"57x29.5x29.5"},{"model":"AQD","weight":532,"dims":"57x29.5x29.5"},{"model":"SQD","weight":532,"dims":"57x29.5x29.5"},{"model":"SFG500B","weight":423,"dims":"36x52x35"},{"model":"SFG500T","weight":408,"dims":"62x37x56"},{"model":"SFG500TM","weight":518,"dims":"62x37x56"},{"model":"SFG600TM","weight":622,"dims":"62x37x56"},{"model":"SFG600TMM","weight":683,"dims":"73x36x56"},{"model":"SFG600TL","weight":772,"dims":"73x36x56"},{"model":"T50","weight":243,"dims":"33x73x39"}];
+
+const CREDS = { userName: 'RatingTool', password: 'Test_Admin@12', srvToken: '' };
+let sel = null, hiIdx = -1, authToken = null;
+
+const modelInput = document.getElementById('modelInput');
+const dd = document.getElementById('dd');
+const quoteBtn = document.getElementById('quoteBtn');
+
+modelInput.addEventListener('input', onType);
+modelInput.addEventListener('keydown', onKey);
+document.querySelectorAll('.acc-item').forEach(el => el.addEventListener('click', () => el.classList.toggle('checked')));
+document.getElementById('origZip').addEventListener('input', function() {
+  document.getElementById('origNote').textContent = this.value === '03079' ? 'Salem, NH (default)' : '';
+});
+quoteBtn.addEventListener('click', getQuotes);
+document.addEventListener('click', e => { if (!e.target.closest('#modelWrap')) closeDd(); });
+
+function onType() {
+  const q = modelInput.value.trim().toLowerCase();
+  sel = null; clearSpecs();
+  if (!q) { closeDd(); return; }
+  const hits = EQ.filter(e => e.model.toLowerCase().includes(q)).slice(0, 10);
+  if (!hits.length) { closeDd(); return; }
+  dd.innerHTML = ''; hiIdx = -1;
+  hits.forEach(item => {
+    const d = document.createElement('div');
+    d.className = 'dd-item';
+    d.innerHTML = `<span>${item.model}</span><span class="dd-hint">${item.weight} lbs · ${item.dims}"</span>`;
+    d.addEventListener('mousedown', () => pick(item));
+    dd.appendChild(d);
+  });
+  dd.style.display = 'block';
+}
+
+function pick(item) {
+  sel = item;
+  modelInput.value = item.model;
+  const p = item.dims.split('x');
+  document.getElementById('weight').value = item.weight;
+  document.getElementById('dimL').value = p[0] || '';
+  document.getElementById('dimW').value = p[1] || '';
+  document.getElementById('dimH').value = p[2] || '';
+  document.getElementById('tagW').textContent = item.weight + ' lbs';
+  document.getElementById('tagW').classList.add('show');
+  document.getElementById('tagD').textContent = item.dims + '"';
+  document.getElementById('tagD').classList.add('show');
+  document.getElementById('tagOk').classList.add('show');
+  closeDd();
+}
+
+function clearSpecs() {
+  ['tagW','tagD','tagOk'].forEach(id => document.getElementById(id).classList.remove('show'));
+  ['weight','dimL','dimW','dimH'].forEach(id => document.getElementById(id).value = '');
+}
+
+function closeDd() { dd.style.display = 'none'; hiIdx = -1; }
+
+function onKey(e) {
+  const items = dd.querySelectorAll('.dd-item');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') { hiIdx = Math.min(hiIdx+1, items.length-1); hl(items); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { hiIdx = Math.max(hiIdx-1, 0); hl(items); e.preventDefault(); }
+  else if (e.key === 'Enter' && hiIdx >= 0) { items[hiIdx].dispatchEvent(new Event('mousedown')); e.preventDefault(); }
+  else if (e.key === 'Escape') closeDd();
+}
+function hl(items) { items.forEach((it,i) => it.classList.toggle('hi', i===hiIdx)); if(hiIdx>=0) items[hiIdx].scrollIntoView({block:'nearest'}); }
+
+async function getToken() {
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(CREDS)
+  });
+  if (!res.ok) throw new Error('Login failed: ' + res.status);
+  const text = await res.text();
+  try { const j = JSON.parse(text); return j.token || j.Token || text.replace(/"/g,''); }
+  catch(e) { return text.replace(/"/g,''); }
+}
+
+async function getQuotes() {
+  const err = document.getElementById('errBox');
+  const sb = document.getElementById('statusBar');
+  const st = document.getElementById('statusText');
+  err.style.display = 'none';
+  document.getElementById('resultsBox').classList.remove('show');
+
+  if (!sel) { err.textContent = 'Please select a model from the dropdown.'; err.style.display = 'block'; return; }
+  const dest = document.getElementById('destZip').value.trim();
+  if (!dest || dest.length !== 5 || isNaN(dest)) { err.textContent = 'Please enter a valid 5-digit destination zip.'; err.style.display = 'block'; return; }
+
+  quoteBtn.disabled = true;
+  sb.classList.add('show');
+  const orig = document.getElementById('origZip').value.trim() || '03079';
+  const fclass = document.getElementById('fclass').value;
+  const pallets = parseInt(document.getElementById('pallets').value) || 1;
+  const p = sel.dims.split('x');
+  const accs = Array.from(document.querySelectorAll('.acc-item.checked')).map(el => el.dataset.val);
+
+  try {
+    if (!authToken) {
+      st.textContent = 'Authenticating with TMS...';
+      authToken = await getToken();
+    }
+
+    st.textContent = 'Fetching your contracted rates...';
+
+    const payload = {
+      OrigZip: orig, OrigCity: '', OrigState: '', OrigCountry: 'US',
+      DestZip: dest, DestCity: '', DestState: '', DestCountry: 'US',
+      ShipmentDate: new Date().toISOString().split('T')[0],
+      UserToken: authToken,
+      Shipments: [{
+        Description: sel.model, Pallets: pallets, Pieces: pallets,
+        Weight: sel.weight, Class: fclass,
+        Length: parseFloat(p[0])||0, Width: parseFloat(p[1])||0, Height: parseFloat(p[2])||0,
+        IsHazmat: false, IsStackable: false
+      }],
+      Accessorials: accs
+    };
+
+    const res = await fetch('/rates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'usertoken': authToken },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) { authToken = null; throw new Error('Session expired — please try again.'); }
+      const txt = await res.text();
+      throw new Error('API error ' + res.status + ': ' + txt.slice(0, 300));
+    }
+
+    const data = await res.json();
+    sb.classList.remove('show');
+    renderResults(data, orig, dest, sel.model, sel.weight, fclass);
+
+  } catch(e) {
+    sb.classList.remove('show');
+    err.textContent = e.message || 'Something went wrong. Please try again.';
+    err.style.display = 'block';
+  }
+  quoteBtn.disabled = false;
+}
+
+function renderResults(data, orig, dest, model, weight, fclass) {
+  const list = document.getElementById('quoteList');
+  const meta = document.getElementById('resultsMeta');
+  list.innerHTML = '';
+
+  let quotes = [];
+  if (Array.isArray(data)) quotes = data;
+  else if (data.ContractResult) quotes = Array.isArray(data.ContractResult) ? data.ContractResult : [data.ContractResult];
+  else if (data.Rates) quotes = data.Rates;
+  else if (data.rates) quotes = data.rates;
+  else {
+    const raw = document.createElement('div');
+    raw.className = 'raw-response';
+    raw.textContent = 'Raw API response:\n' + JSON.stringify(data, null, 2).slice(0, 1000);
+    list.appendChild(raw);
+    document.getElementById('resultsBox').classList.add('show');
+    return;
+  }
+
+  if (!quotes.length) {
+    list.innerHTML = '<div style="font-size:13px;color:#666;padding:12px;background:#f9f9f9;border-radius:8px;">No rates returned for this lane. Try adjusting freight class or contact your 3PL.</div>';
+    document.getElementById('resultsBox').classList.add('show');
+    return;
+  }
+
+  quotes.sort((a,b) => (a.TotalCharge||a.GrossCharge||0) - (b.TotalCharge||b.GrossCharge||0));
+  meta.textContent = `${orig} → ${dest} · ${quotes.length} carrier${quotes.length!==1?'s':''}`;
+
+  quotes.forEach((q, i) => {
+    const carrier = q.CarrierName||q.carrierName||q.Carrier||'—';
+    const total = q.TotalCharge||q.GrossCharge||q.grossCharge||0;
+    const gross = q.GrossCharge||q.grossCharge||0;
+    const discount = q.Discount||q.discount||0;
+    const fuel = q.FuelCharge||q.fuelCharge||0;
+    const transit = q.TransitDays||q.transitDays||null;
+    const service = q.LaneName||q.ServiceLevel||'Standard';
+    const initials = carrier.split(' ').map(w=>w[0]).join('').slice(0,4).toUpperCase();
+    const card = document.createElement('div');
+    card.className = 'quote-card' + (i===0?' best':'');
+    let bd = '';
+    if (gross) bd += `Gross $${gross.toFixed(2)}`;
+    if (discount) bd += ` · Disc -$${Math.abs(discount).toFixed(2)}`;
+    if (fuel) bd += ` · Fuel $${fuel.toFixed(2)}`;
+    card.innerHTML = `
+      <div class="carrier-badge">${initials}</div>
+      <div>
+        <div class="carrier-name">${carrier}${i===0?'<span class="badge-best">lowest</span>':''}</div>
+        <div class="carrier-sub">${service}${transit?' · '+transit+(transit===1?' day':' days'):''}</div>
+        ${bd?`<div class="carrier-breakdown">${bd}</div>`:''}
+      </div>
+      <div class="price-col">
+        <div class="price-total">$${total.toFixed(2)}</div>
+        <div class="price-label">estimate</div>
+      </div>`;
+    list.appendChild(card);
+  });
+  document.getElementById('resultsBox').classList.add('show');
+}
+</script>
+</body>
+</html>

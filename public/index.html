@@ -428,6 +428,39 @@ function renderResults(data, orig, dest, model, weight, fclass) {
   });
   document.getElementById('resultsBox').classList.add('show');
 }
+ 
+function renderUPSResults(rates, orig, dest, model, weight) {
+  const list = document.getElementById('quoteList');
+  const meta = document.getElementById('resultsMeta');
+  list.innerHTML = '';
+  if (!rates.length) {
+    list.innerHTML = '<div style="font-size:13px;color:#666;padding:12px;background:#f9f9f9;border-radius:8px;">No UPS rates returned for this route.</div>';
+    document.getElementById('resultsBox').classList.add('show');
+    return;
+  }
+  meta.textContent = orig + ' → ' + dest + ' · ' + model + ' · ' + weight + ' lbs · UPS Parcel';
+  rates.forEach((r, i) => {
+    const card = document.createElement('div');
+    card.className = 'quote-card' + (i === 0 ? ' best' : '');
+    const initials = r.service.split(' ').map(w => w[0]).join('').slice(0, 4).toUpperCase();
+    card.innerHTML =
+      '<div class="carrier-badge">' + initials + '</div>' +
+      '<div>' +
+        '<div class="carrier-name">' + r.service + (i === 0 ? '<span class="badge-best">cheapest</span>' : '') + '</div>' +
+        '<div class="carrier-sub">' + (r.days ? r.days + (r.days === 1 ? ' business day' : ' business days') : '') + '</div>' +
+      '</div>' +
+      '<div class="price-col">' +
+        '<div class="price-total">$' + r.amount.toFixed(2) + '</div>' +
+        '<div class="price-label">UPS rate</div>' +
+      '</div>';
+    list.appendChild(card);
+  });
+  const note = document.createElement('div');
+  note.style.cssText = 'font-size:11px;color:#aaa;margin-top:8px;padding:8px 12px;background:#fafafa;border-radius:8px;';
+  note.textContent = 'UPS rates are standard estimates via Shippo. Actual rates may vary.';
+  list.appendChild(note);
+  document.getElementById('resultsBox').classList.add('show');
+}
 </script>
 </body>
 </html>

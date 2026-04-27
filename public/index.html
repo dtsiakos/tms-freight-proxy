@@ -398,7 +398,7 @@ function renderResults(data, orig, dest, model, weight, fclass) {
     return;
   }
  
-  quotes.sort((a,b) => (a.TotalCharge||a.GrossCharge||0) - (b.TotalCharge||b.GrossCharge||0));
+  quotes.sort((a,b) => (a.TotalShipmentCost||a.TotalCharge||a.GrossCharge||0) - (b.TotalShipmentCost||b.TotalCharge||b.GrossCharge||0));
   meta.textContent = `${orig} → ${dest} · ${quotes.length} carrier${quotes.length!==1?'s':''}`;
  
   quotes.forEach((q, i) => {

@@ -377,6 +377,7 @@ function renderResults(data, orig, dest, model, weight, fclass) {
  
   let quotes = [];
   if (Array.isArray(data)) quotes = data;
+  else if (data.LeastCostCarriers) quotes = data.LeastCostCarriers;
   else if (data.ContractResult) quotes = Array.isArray(data.ContractResult) ? data.ContractResult : [data.ContractResult];
   else if (data.Rates) quotes = data.Rates;
   else if (data.rates) quotes = data.rates;
@@ -388,6 +389,8 @@ function renderResults(data, orig, dest, model, weight, fclass) {
     document.getElementById('resultsBox').classList.add('show');
     return;
   }
+  // Filter out carriers with no service (GrossCharge = 0)
+  quotes = quotes.filter(q => (q.TotalShipmentCost || q.GrossCharge || q.NetCharge || 0) > 0);
  
   if (!quotes.length) {
     list.innerHTML = '<div style="font-size:13px;color:#666;padding:12px;background:#f9f9f9;border-radius:8px;">No rates returned for this lane. Try adjusting freight class or contact your 3PL.</div>';
@@ -400,12 +403,12 @@ function renderResults(data, orig, dest, model, weight, fclass) {
  
   quotes.forEach((q, i) => {
     const carrier = q.CarrierName||q.carrierName||q.Carrier||'—';
-    const total = q.TotalCharge||q.GrossCharge||q.grossCharge||0;
+    const total = q.TotalShipmentCost||q.TotalCharge||q.GrossCharge||q.grossCharge||0;
     const gross = q.GrossCharge||q.grossCharge||0;
     const discount = q.Discount||q.discount||0;
-    const fuel = q.FuelCharge||q.fuelCharge||0;
+    const fuel = q.FuelSurcharge||q.FuelCharge||q.fuelCharge||0;
     const transit = q.TransitDays||q.transitDays||null;
-    const service = q.LaneName||q.ServiceLevel||'Standard';
+    const service = q.LaneName||q.ServiceLevelDescription||q.ServiceLevel||'Standard';
     const initials = carrier.split(' ').map(w=>w[0]).join('').slice(0,4).toUpperCase();
     const card = document.createElement('div');
     card.className = 'quote-card' + (i===0?' best':'');
@@ -464,4 +467,3 @@ function renderUPSResults(rates, orig, dest, model, weight) {
 </script>
 </body>
 </html>
- 

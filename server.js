@@ -23,8 +23,10 @@ app.post('/login', async (req, res) => {
       body: JSON.stringify({ userName: TMS_USER, password: TMS_PASS, srvToken: TMS_SRV_TOKEN })
     });
     const data = await response.text();
-    console.log('TMS Login status:', response.status, 'body:', data.slice(0, 200));
-    res.status(response.status).send(data);
+    // Strip surrounding quotes from token if present
+    const token = data.replace(/^"|"$/g, '').trim();
+    console.log('TMS Login status:', response.status, 'token:', token);
+    res.status(response.status).send(JSON.stringify(token));
   } catch (err) {
     console.log('TMS Login error:', err.message);
     res.status(500).json({ error: err.message });
@@ -34,10 +36,11 @@ app.post('/login', async (req, res) => {
 app.post('/rates', async (req, res) => {
   try {
     const token = req.headers['usertoken'] || '';
+    const rateBody = Object.assign({}, req.body, { UserToken: token });
     const response = await fetch(TMS_BASE + '/ShipmentLiteService/GetLTLRates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'UserToken': token },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(rateBody)
     });
     const data = await response.text();
     console.log('TMS Rates status:', response.status, 'response:', data.slice(0, 200));

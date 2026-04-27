@@ -36,8 +36,10 @@ app.post('/login', async (req, res) => {
 app.post('/rates', async (req, res) => {
   try {
     const token = req.headers['usertoken'] || '';
-    const rateBody = Object.assign({}, req.body, { UserToken: token });
-    console.log('TMS Rates sending token:', token, 'body keys:', Object.keys(rateBody).join(','));
+    const inner = Object.assign({}, req.body, { UserToken: token });
+    // Swagger schema wraps the request in ltlRequest
+    const rateBody = { ltlRequest: inner };
+    console.log('TMS Rates sending token:', token, 'body keys:', Object.keys(inner).join(','));
     const response = await fetch(TMS_BASE + '/ShipmentLiteService/GetLTLRates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'UserToken': token },

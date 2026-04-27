@@ -37,6 +37,7 @@ app.post('/rates', async (req, res) => {
   try {
     const token = req.headers['usertoken'] || '';
     const rateBody = Object.assign({}, req.body, { UserToken: token });
+    console.log('TMS Rates sending token:', token, 'body keys:', Object.keys(rateBody).join(','));
     const response = await fetch(TMS_BASE + '/ShipmentLiteService/GetLTLRates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'UserToken': token },

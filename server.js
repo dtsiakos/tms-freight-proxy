@@ -9,6 +9,7 @@ const TMS_BASE = 'https://restapiv7.tmssaas.com';
 const SHIPPO_TOKEN = process.env.SHIPPO_TOKEN;
 const TMS_USER = process.env.TMS_USER || 'RatingTool';
 const TMS_PASS = process.env.TMS_PASSWORD || '';
+const TMS_SRV_TOKEN = process.env.TMS_SRV_TOKEN || '';
  
 app.use(cors());
 app.use(express.json());
@@ -19,10 +20,10 @@ app.post('/login', async (req, res) => {
     const response = await fetch(TMS_BASE + '/ShipmentLiteService/Login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ userName: TMS_USER, password: TMS_PASS, srvToken: req.body.srvToken || '' })
+      body: JSON.stringify({ userName: TMS_USER, password: TMS_PASS, srvToken: TMS_SRV_TOKEN })
     });
     const data = await response.text();
-    console.log('TMS Login status:', response.status, 'body:', data.slice(0, 300));
+    console.log('TMS Login status:', response.status, 'body:', data.slice(0, 200));
     res.status(response.status).send(data);
   } catch (err) {
     console.log('TMS Login error:', err.message);
@@ -35,14 +36,11 @@ app.post('/rates', async (req, res) => {
     const token = req.headers['usertoken'] || '';
     const response = await fetch(TMS_BASE + '/ShipmentLiteService/GetLTLRates', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'UserToken': token
-      },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'UserToken': token },
       body: JSON.stringify(req.body)
     });
     const data = await response.text();
+    console.log('TMS Rates status:', response.status, 'response:', data.slice(0, 200));
     res.status(response.status).send(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -67,14 +65,10 @@ app.post('/ups-rates', async (req, res) => {
     };
  
     let data, response;
-    // Retry up to 3 times if rates come back empty — Shippo sometimes needs a moment
     for (let attempt = 0; attempt < 3; attempt++) {
       response = await fetch('https://api.goshippo.com/shipments/', {
         method: 'POST',
-        headers: {
-          'Authorization': 'ShippoToken ' + SHIPPO_TOKEN,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': 'ShippoToken ' + SHIPPO_TOKEN, 'Content-Type': 'application/json' },
         body: JSON.stringify(shipment)
       });
       data = await response.json();
@@ -115,4 +109,3 @@ app.post('/ups-rates', async (req, res) => {
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
  
 app.listen(PORT, () => console.log('TMS proxy running on port ' + PORT));
- 

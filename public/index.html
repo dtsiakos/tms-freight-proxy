@@ -142,11 +142,16 @@
  
     <div class="divider"></div>
     <div class="sec-label">Freight markup</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-      <input type="range" id="markupRange" min="0" max="30" value="10" step="1"
-        style="flex:1;accent-color:#0099D6;cursor:pointer;"
-        oninput="document.getElementById('markupVal').textContent=this.value+'%'" />
-      <span id="markupVal" style="font-size:15px;font-weight:600;color:#0099D6;min-width:38px;text-align:right;">10%</span>
+    <div class="field" style="margin-bottom:10px;max-width:160px;">
+      <select id="markupRange">
+        <option value="0">0% — no markup</option>
+        <option value="5">5%</option>
+        <option value="10">10%</option>
+        <option value="15" selected>15%</option>
+        <option value="20">20%</option>
+        <option value="25">25%</option>
+        <option value="30">30%</option>
+      </select>
     </div>
     <div class="divider"></div>
     <div id="accSection">

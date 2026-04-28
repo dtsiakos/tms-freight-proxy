@@ -238,6 +238,18 @@ function pick(item) {
   }
  
   const liftgateEl = document.querySelector('.acc-item[data-val="LGDEL"]');
+  // Grey out freight class for UPS items
+  const fclassEl = document.getElementById('fclass');
+  if (item.carrier === 'ups') {
+    fclassEl.disabled = true;
+    fclassEl.style.opacity = '0.4';
+    fclassEl.style.cursor = 'not-allowed';
+  } else {
+    fclassEl.disabled = false;
+    fclassEl.style.opacity = '1';
+    fclassEl.style.cursor = 'pointer';
+  }
+ 
   if (item.carrier === 'ups') {
     document.getElementById('accSection').style.display = 'none';
   } else {
@@ -489,3 +501,4 @@ function renderUPSResults(rates, orig, dest, model, weight, markupPct) {
 </script>
 </body>
 </html>
+ 

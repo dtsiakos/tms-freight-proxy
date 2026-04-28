@@ -177,6 +177,7 @@ const quoteBtn = document.getElementById('quoteBtn');
  
 modelInput.addEventListener('input', onType);
 modelInput.addEventListener('keydown', onKey);
+modelInput.addEventListener('blur', () => setTimeout(closeDd, 150));
 document.querySelectorAll('.acc-item').forEach(el => el.addEventListener('click', () => el.classList.toggle('checked')));
 document.getElementById('origZip').addEventListener('input', function() {
   document.getElementById('origNote').textContent = this.value === '03079' ? 'Salem, NH (default)' : '';
@@ -249,7 +250,7 @@ function clearSpecs() {
   ['weight','dimL','dimW','dimH'].forEach(id => document.getElementById(id).value = '');
 }
  
-function closeDd() { dd.style.display = 'none'; hiIdx = -1; }
+function closeDd() { dd.style.display = 'none'; hiIdx = -1; modelInput.blur(); }
  
 function onKey(e) {
   const items = dd.querySelectorAll('.dd-item');

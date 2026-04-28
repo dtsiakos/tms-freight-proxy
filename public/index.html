@@ -422,9 +422,7 @@ function renderResults(data, orig, dest, model, weight, fclass) {
       <div class="carrier-badge">${initials}</div>
       <div>
         <div class="carrier-name">${carrier}${i===0?'<span class="badge-best">lowest</span>':''}</div>
-        <div class="carrier-sub">${service}${transit?' · '+transit+(transit===1?' day':' days'):''} · ${isDirect?'<span style="color:#16a34a;font-weight:500;">Direct</span>':'<span style="color:#b45309;">Via terminal</span>'}</div>
-        ${isDirect&&destTerminal?`<div class="carrier-breakdown">Dest terminal: ${destTerminal}${destTerminalPhone&&destTerminalPhone!=='000-000-0000'?' · '+destTerminalPhone:''}</div>`:''}
-        ${bd?`<div class="carrier-breakdown">${bd}</div>`:''}
+        <div class="carrier-sub">${transit?transit+(transit===1?' day':' days')+' · ':''} ${isDirect?'<span style="color:#16a34a;font-weight:500;">Direct</span>':'<span style="color:#b45309;">Via terminal</span>'}</div>
       </div>
       <div class="price-col">
         <div class="price-total">$${total.toFixed(2)}</div>

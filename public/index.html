@@ -408,6 +408,9 @@ function renderResults(data, orig, dest, model, weight, fclass) {
     const fuel = q.FuelSurcharge||q.FuelCharge||q.fuelCharge||0;
     const transit = q.TransitDays||q.transitDays||null;
     const service = q.LaneName||q.ServiceLevelDescription||q.ServiceLevel||'Standard';
+    const destTerminal = q.DestTerminalName||null;
+    const destTerminalPhone = q.DestTerminalPhone||null;
+    const isDirect = destTerminal && !destTerminal.includes('AVERAGE') && !destTerminal.includes('* *');
     const initials = carrier.split(' ').map(w=>w[0]).join('').slice(0,4).toUpperCase();
     const card = document.createElement('div');
     card.className = 'quote-card' + (i===0?' best':'');
@@ -419,12 +422,13 @@ function renderResults(data, orig, dest, model, weight, fclass) {
       <div class="carrier-badge">${initials}</div>
       <div>
         <div class="carrier-name">${carrier}${i===0?'<span class="badge-best">lowest</span>':''}</div>
-        <div class="carrier-sub">${service}${transit?' · '+transit+(transit===1?' day':' days'):''}</div>
+        <div class="carrier-sub">${service}${transit?' · '+transit+(transit===1?' day':' days'):''} · ${isDirect?'<span style="color:#16a34a;font-weight:500;">Direct</span>':'<span style="color:#b45309;">Via terminal</span>'}</div>
+        ${isDirect&&destTerminal?`<div class="carrier-breakdown">Dest terminal: ${destTerminal}${destTerminalPhone&&destTerminalPhone!=='000-000-0000'?' · '+destTerminalPhone:''}</div>`:''}
         ${bd?`<div class="carrier-breakdown">${bd}</div>`:''}
       </div>
       <div class="price-col">
         <div class="price-total">$${total.toFixed(2)}</div>
-        <div class="price-label">estimate</div>
+        <div class="price-label">contracted rate</div>
       </div>`;
     list.appendChild(card);
   });

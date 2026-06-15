@@ -17,7 +17,8 @@ const ADMIN_USERS = (process.env.ADMIN_USERS || 'DT').split(',').map(u => u.trim
 // Database connection
 const pool = process.env.DATABASE_URL ? new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  family: 4
 }) : null;
  
 // Sessions

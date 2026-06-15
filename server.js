@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const path = require('path');
+const crypto = require('crypto');
  
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,11 +12,69 @@ const TMS_USER = process.env.TMS_USER || 'RatingTool';
 const TMS_PASS = process.env.TMS_PASSWORD || '';
 const TMS_SRV_TOKEN = process.env.TMS_SRV_TOKEN || '';
  
+// Users stored as env vars: USERS="TS:Univex1948!,JK:Univex1948!,..."
+// Sessions stored in memory (reset on redeploy — acceptable for free tier)
+const sessions = {};
+ 
+function getUsers() {
+  const raw = process.env.USERS || '';
+  const users = {};
+  raw.split(',').forEach(pair => {
+    const [u, p] = pair.split(':');
+    if (u && p) users[u.trim()] = p.trim();
+  });
+  return users;
+}
+ 
+function requireAuth(req, res, next) {
+  const token = req.headers['x-session-token'] || req.query.token;
+  if (token && sessions[token] && sessions[token].expires > Date.now()) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+}
+ 
 app.use(cors());
 app.use(express.json());
+ 
+// Serve login page at root if not authenticated
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+ 
+// Serve freight tool - protected
+app.get('/tool', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+ 
+// Static assets
 app.use(express.static(path.join(__dirname, 'public')));
  
-app.post('/login', async (req, res) => {
+// Login endpoint
+app.post('/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  const users = getUsers();
+  if (users[username] && users[username] === password) {
+    const token = crypto.randomBytes(32).toString('hex');
+    sessions[token] = { username, expires: Date.now() + 8 * 60 * 60 * 1000 }; // 8 hours
+    console.log('Login success:', username);
+    res.json({ token, username });
+  } else {
+    console.log('Login failed for:', username);
+    res.status(401).json({ error: 'Invalid username or password' });
+  }
+});
+ 
+// Logout
+app.post('/auth/logout', (req, res) => {
+  const token = req.headers['x-session-token'];
+  if (token) delete sessions[token];
+  res.json({ ok: true });
+});
+ 
+// TMS Login
+app.post('/login', requireAuth, async (req, res) => {
   try {
     const response = await fetch(TMS_BASE + '/ShipmentLiteService/Login', {
       method: 'POST',
@@ -23,7 +82,6 @@ app.post('/login', async (req, res) => {
       body: JSON.stringify({ userName: TMS_USER, password: TMS_PASS, srvToken: TMS_SRV_TOKEN })
     });
     const data = await response.text();
-    // Strip surrounding quotes from token if present
     const token = data.replace(/^"|"$/g, '').trim();
     console.log('TMS Login status:', response.status, 'token:', token);
     res.status(response.status).send(JSON.stringify(token));
@@ -33,18 +91,18 @@ app.post('/login', async (req, res) => {
   }
 });
  
-app.post('/rates', async (req, res) => {
+// TMS Rates
+app.post('/rates', requireAuth, async (req, res) => {
   try {
     const token = req.headers['usertoken'] || '';
     const body = req.body;
-    // Swagger model shows correct field names: UsrToken, SrvToken, ProfileCode, ClientCode
     const rateBody = Object.assign({}, body, {
       UsrToken: token,
       SrvToken: TMS_SRV_TOKEN,
-      ProfileCode: process.env.TMS_PROFILE_CODE || 'devne',
+      ProfileCode: process.env.TMS_PROFILE_CODE || '',
       ClientCode: process.env.TMS_CLIENT_CODE || ''
     });
-    console.log('TMS Rates sending UsrToken:', token, 'SrvToken:', TMS_SRV_TOKEN);
+    console.log('TMS Rates sending UsrToken:', token);
     const response = await fetch(TMS_BASE + '/ShipmentLiteService/GetLTLRates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -58,7 +116,8 @@ app.post('/rates', async (req, res) => {
   }
 });
  
-app.post('/ups-rates', async (req, res) => {
+// UPS Rates via Shippo
+app.post('/ups-rates', requireAuth, async (req, res) => {
   try {
     const { origZip, destZip, weight, length, width, height } = req.body;
     const shipment = {
@@ -76,7 +135,6 @@ app.post('/ups-rates', async (req, res) => {
     };
  
     let data, response;
-    // Retry up to 5 times with 3s pause
     for (let attempt = 0; attempt < 5; attempt++) {
       response = await fetch('https://api.goshippo.com/shipments/', {
         method: 'POST',

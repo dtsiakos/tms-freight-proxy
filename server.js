@@ -17,8 +17,7 @@ const ADMIN_USERS = (process.env.ADMIN_USERS || 'DT').split(',').map(u => u.trim
 // Database connection
 const pool = process.env.DATABASE_URL ? new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  family: 4
+  ssl: { rejectUnauthorized: false }
 }) : null;
  
 // Sessions
@@ -74,9 +73,12 @@ async function initDB() {
         ups_dim_l NUMERIC(8,2),
         ups_dim_w NUMERIC(8,2),
         ups_dim_h NUMERIC(8,2),
+        fclass VARCHAR(10) DEFAULT '50',
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    // Add fclass column if it doesn't exist (migration)
+    await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS fclass VARCHAR(10) DEFAULT '50'`);
     console.log('Database ready');
   } catch (err) {
     console.error('DB init error:', err.message);
@@ -125,11 +127,11 @@ app.get('/api/equipment', requireAuth, async (req, res) => {
  
 app.put('/api/equipment/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h } = req.body;
+    const { model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h, fclass } = req.body;
     const result = await pool.query(
       `UPDATE equipment SET model=$1, weight=$2, dim_l=$3, dim_w=$4, dim_h=$5,
        liftgate=$6, carrier=$7, ups_weight=$8, ups_dim_l=$9, ups_dim_w=$10, ups_dim_h=$11,
-       updated_at=NOW() WHERE id=$12 RETURNING *`,
+       fclass=$12, updated_at=NOW() WHERE id=$13 RETURNING *`,
       [model, weight||null, dim_l||null, dim_w||null, dim_h||null,
        liftgate, carrier, ups_weight||null, ups_dim_l||null, ups_dim_w||null, ups_dim_h||null,
        req.params.id]
@@ -142,10 +144,10 @@ app.put('/api/equipment/:id', requireAuth, requireAdmin, async (req, res) => {
  
 app.post('/api/equipment', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h } = req.body;
+    const { model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h, fclass } = req.body;
     const result = await pool.query(
-      `INSERT INTO equipment (model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      `INSERT INTO equipment (model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h, fclass)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [model, weight||null, dim_l||null, dim_w||null, dim_h||null,
        liftgate||false, carrier||'ltl', ups_weight||null, ups_dim_l||null, ups_dim_w||null, ups_dim_h||null]
     );
@@ -173,12 +175,12 @@ app.post('/api/equipment/seed', requireAuth, requireAdmin, async (req, res) => {
       const p = item.dims ? item.dims.split('x') : [];
       const up = item.upsDims ? item.upsDims.split('x') : [];
       await pool.query(
-        `INSERT INTO equipment (model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        `INSERT INTO equipment (model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h, fclass)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
          ON CONFLICT (model) DO NOTHING`,
         [item.model, item.weight||null, p[0]||null, p[1]||null, p[2]||null,
          item.liftgate||false, item.carrier||'ltl',
-         item.upsWeight||null, up[0]||null, up[1]||null, up[2]||null]
+         item.upsWeight||null, up[0]||null, up[1]||null, up[2]||null, item.fclass||'50']
       );
       count++;
     }
@@ -261,3 +263,4 @@ app.post('/ups-rates', requireAuth, async (req, res) => {
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
  
 initDB().then(() => app.listen(PORT, () => console.log('TMS proxy running on port ' + PORT)));
+ 

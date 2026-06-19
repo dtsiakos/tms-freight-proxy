@@ -208,6 +208,7 @@ async function loadEquipment() {
       dims: (r.dim_l && r.dim_w && r.dim_h) ? r.dim_l + 'x' + r.dim_w + 'x' + r.dim_h : '',
       liftgate: r.liftgate,
       carrier: r.carrier || 'ltl',
+      fclass: r.fclass || '50',
       upsWeight: r.ups_weight,
       upsDims: (r.ups_dim_l && r.ups_dim_w && r.ups_dim_h) ? r.ups_dim_l + 'x' + r.ups_dim_w + 'x' + r.ups_dim_h : null
     }));
@@ -277,7 +278,9 @@ function pick(item) {
  
   const liftgateEl = document.querySelector('.acc-item[data-val="LGDEL"]');
   // Grey out freight class for UPS items
+  // Set default freight class for this model
   const fclassEl = document.getElementById('fclass');
+  if (item.fclass) fclassEl.value = item.fclass;
   if (item.carrier === 'ups') {
     fclassEl.disabled = true;
     fclassEl.style.opacity = '0.4';

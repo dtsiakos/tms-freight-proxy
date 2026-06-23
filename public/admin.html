@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -193,10 +194,9 @@
     </div>
  
     <div class="modal-section">Pricing</div>
-    <div class="grid3">
-      <div class="field"><label>Cost ($)</label><input type="number" step="0.01" id="fCost" placeholder="0.00" /></div>
-      <div class="field"><label>List price ($)</label><input type="number" step="0.01" id="fListPrice" placeholder="0.00" /></div>
-      <div class="field"><label>Net price ($)</label><input type="number" step="0.01" id="fNetPrice" placeholder="0.00" /></div>
+    <div class="field">
+      <label>Cost ($)</label>
+      <input type="number" step="0.01" id="fCost" placeholder="0.00" style="max-width:200px;" />
     </div>
  
     <div class="modal-footer">
@@ -291,8 +291,6 @@ function renderTable(items) {
     const carrierBadge = `<span class="badge badge-${item.carrier}">${item.carrier.toUpperCase()}</span>`;
     const fcBadge = item.freight_class ? `<span class="fc-badge">${item.freight_class}</span>` : '<span class="no-price">default</span>';
     const cost = fmtPrice(item.cost) || '<span class="no-price">—</span>';
-    const list = fmtPrice(item.list_price) || '<span class="no-price">—</span>';
-    const net = fmtPrice(item.net_price) || '<span class="no-price">—</span>';
     return `<tr>
       <td class="model-cell">${item.model}</td>
       <td>${weight}</td>
@@ -301,8 +299,6 @@ function renderTable(items) {
       <td>${carrierBadge}</td>
       <td>${fcBadge}</td>
       <td class="price-cell">${cost}</td>
-      <td class="price-cell">${list}</td>
-      <td class="price-cell">${net}</td>
       <td><div class="actions">
         <button class="btn btn-secondary btn-sm" onclick="openEditModal(${item.id})">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteModel(${item.id}, '${item.model}')">Delete</button>
@@ -314,7 +310,7 @@ function renderTable(items) {
       <thead><tr>
         <th>Model</th><th>Weight</th><th>Dimensions (L×W×H)</th>
         <th style="text-align:center;">Liftgate</th><th>Carrier</th><th>Class</th>
-        <th>Cost</th><th>List Price</th><th>Net Price</th><th>Actions</th>
+        <th>Cost</th><th>Actions</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -326,7 +322,7 @@ function filterTable(q) {
 }
  
 function clearModal() {
-  ['fModel','fWeight','fL','fW','fH','fUpsWeight','fUpsL','fUpsW','fUpsH','fCost','fListPrice','fNetPrice'].forEach(id => document.getElementById(id).value = '');
+  ['fModel','fWeight','fL','fW','fH','fUpsWeight','fUpsL','fUpsW','fUpsH','fCost'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fCarrier').value = 'ltl';
   document.getElementById('fFreightClass').value = '';
   document.getElementById('fLiftgate').checked = false;
@@ -359,8 +355,6 @@ function openEditModal(id) {
   document.getElementById('fUpsW').value = item.ups_dim_w || '';
   document.getElementById('fUpsH').value = item.ups_dim_h || '';
   document.getElementById('fCost').value = item.cost || '';
-  document.getElementById('fListPrice').value = item.list_price || '';
-  document.getElementById('fNetPrice').value = item.net_price || '';
   toggleUpsSection();
   document.getElementById('modalOverlay').classList.add('show');
 }
@@ -387,8 +381,6 @@ async function saveModel() {
     ups_dim_w: document.getElementById('fUpsW').value || null,
     ups_dim_h: document.getElementById('fUpsH').value || null,
     cost: document.getElementById('fCost').value || null,
-    list_price: document.getElementById('fListPrice').value || null,
-    net_price: document.getElementById('fNetPrice').value || null,
   };
   if (!data.model) { alert('Model number is required'); return; }
   try {

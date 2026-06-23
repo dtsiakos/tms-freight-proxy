@@ -7,7 +7,7 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a1a1a; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
-  .container { max-width: 1100px; margin: 0 auto; }
+  .container { max-width: 1200px; margin: 0 auto; }
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
   .header h1 { font-size: 22px; font-weight: 600; }
   .header p { font-size: 14px; color: #888; margin-top: 2px; }
@@ -20,6 +20,7 @@
   .btn-secondary { background: #f0f4f8; color: #555; border: 1px solid #ddd; }
   .btn-secondary:hover { background: #e5e9ed; }
   .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 1rem; }
   .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
   .search { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; width: 220px; }
   .search:focus { outline: none; border-color: #0099D6; }
@@ -28,9 +29,6 @@
   th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e5e5e5; white-space: nowrap; }
   td { padding: 8px 10px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
   tr:hover td { background: #f9fbff; }
-  td input, td select { padding: 4px 7px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; font-family: inherit; width: 100%; min-width: 60px; }
-  td input:focus, td select:focus { outline: none; border-color: #0099D6; }
-  td input[type="checkbox"] { width: auto; min-width: unset; }
   .model-cell { font-weight: 600; color: #1a1a1a; min-width: 90px; }
   .actions { display: flex; gap: 5px; white-space: nowrap; }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
@@ -38,11 +36,15 @@
   .badge-ups { background: #fef9e8; color: #92600a; }
   .badge-both { background: #f0fdf4; color: #166534; }
   .incomplete { color: #bbb; font-style: italic; }
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; display: none; }
+  .price-cell { font-size: 12px; color: #444; white-space: nowrap; }
+  .price-cell .no-price { color: #ccc; font-style: italic; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 1000; overflow-y: auto; padding: 1rem; }
   .modal-overlay.show { display: flex; }
-  .modal { background: #fff; border-radius: 14px; padding: 1.75rem; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+  .modal { background: #fff; border-radius: 14px; padding: 1.75rem; width: 100%; max-width: 520px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); margin: auto; }
   .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 1.25rem; }
-  .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .modal-section { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 0 8px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+  .modal-section:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+  .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
   .field label { font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
   .field input, .field select { padding: 8px 11px; border: 1px solid #ddd; border-radius: 7px; font-size: 14px; font-family: inherit; }
   .field input:focus, .field select:focus { outline: none; border-color: #0099D6; }
@@ -58,6 +60,16 @@
   .loading { text-align: center; padding: 3rem; color: #aaa; font-size: 14px; }
   .sign-out { font-size: 12px; color: #888; cursor: pointer; padding: 5px 10px; border: 1px solid #ddd; border-radius: 6px; background: #f0f4f8; }
   .sign-out:hover { background: #e5e9ed; }
+  .setting-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+  .setting-row:last-child { margin-bottom: 0; }
+  .setting-label { font-size: 12px; font-weight: 600; color: #555; }
+  .setting-hint { font-size: 11px; color: #aaa; margin-top: 3px; }
+  .setting-input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; width: 200px; }
+  .setting-input:focus { outline: none; border-color: #0099D6; }
+  .setting-select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; width: 200px; background: #fff; cursor: pointer; }
+  .setting-select:focus { outline: none; border-color: #0099D6; }
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -65,7 +77,7 @@
   <div class="header">
     <div>
       <h1>Equipment Admin</h1>
-      <p>Manage weights, dimensions and carrier settings for all models</p>
+      <p>Manage weights, dimensions, pricing and carrier settings for all models</p>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <span id="userLabel" style="font-size:12px;color:#888;"></span>
@@ -73,6 +85,37 @@
     </div>
   </div>
  
+  <!-- Settings Card -->
+  <div class="card">
+    <div class="card-title">Default settings</div>
+    <div class="settings-grid">
+      <div class="setting-row">
+        <label class="setting-label" for="settingOriginZip">Default origin ZIP</label>
+        <input class="setting-input" type="text" id="settingOriginZip" maxlength="5" placeholder="e.g. 03079" />
+        <div class="setting-hint">Pre-filled origin ZIP on the quote form</div>
+      </div>
+      <div class="setting-row">
+        <label class="setting-label" for="settingFreightClass">Default freight class</label>
+        <select class="setting-select" id="settingFreightClass">
+          <option value="50">Class 50</option><option value="55">Class 55</option>
+          <option value="60">Class 60</option><option value="65">Class 65</option>
+          <option value="70">Class 70</option><option value="77.5">Class 77.5</option>
+          <option value="85">Class 85</option><option value="92.5">Class 92.5</option>
+          <option value="100">Class 100</option><option value="110">Class 110</option>
+          <option value="125">Class 125</option><option value="150">Class 150</option>
+          <option value="175">Class 175</option><option value="200">Class 200</option>
+          <option value="250">Class 250</option><option value="300">Class 300</option>
+          <option value="400">Class 400</option><option value="500">Class 500</option>
+        </select>
+        <div class="setting-hint">Applied to all quotes unless changed by rep</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
+    </div>
+  </div>
+ 
+  <!-- Equipment Table Card -->
   <div class="card">
     <div class="toolbar">
       <button class="btn btn-primary" onclick="openAddModal()">+ Add model</button>
@@ -82,7 +125,7 @@
     <div id="tableContainer"><div class="loading">Loading equipment data...</div></div>
   </div>
  
-  <div class="notice">Changes take effect immediately — no redeploy needed. All rates will use the updated specs on the next quote request.</div>
+  <div class="notice">Changes take effect immediately — no redeploy needed.</div>
 </div>
  
 <!-- Add/Edit Modal -->
@@ -90,38 +133,35 @@
   <div class="modal">
     <h2 id="modalTitle">Add model</h2>
     <input type="hidden" id="editId" />
-    <div class="field">
-      <label>Model number</label>
-      <input type="text" id="fModel" placeholder="e.g. SRM60+" />
+ 
+    <div class="modal-section">Identification</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Model number</label>
+        <input type="text" id="fModel" placeholder="e.g. SRM60+" />
+      </div>
+      <div class="field">
+        <label>Carrier type</label>
+        <select id="fCarrier" onchange="toggleUpsSection()">
+          <option value="ltl">LTL only</option>
+          <option value="ups">UPS parcel only</option>
+          <option value="both">Both LTL and UPS</option>
+        </select>
+      </div>
     </div>
-    <div class="field">
-      <label>Carrier type</label>
-      <select id="fCarrier" onchange="toggleUpsSection()">
-        <option value="ltl">LTL only</option>
-        <option value="ups">UPS parcel only</option>
-        <option value="both">Both LTL and UPS</option>
-      </select>
+ 
+    <div class="modal-section">Shipping specs</div>
+    <div class="grid2">
+      <div class="field"><label>Weight (lbs)</label><input type="number" id="fWeight" placeholder="e.g. 220" /></div>
+      <div class="field" style="flex-direction:row;align-items:center;gap:8px;padding-top:20px;">
+        <input type="checkbox" id="fLiftgate" style="width:auto;" />
+        <label style="text-transform:none;font-size:13px;color:#333;letter-spacing:0;" for="fLiftgate">Liftgate available</label>
+      </div>
     </div>
-    <div class="field"><label>Weight (lbs)</label><input type="number" id="fWeight" placeholder="e.g. 220" /></div>
     <div class="grid3">
       <div class="field"><label>Length (in)</label><input type="number" id="fL" placeholder="L" /></div>
       <div class="field"><label>Width (in)</label><input type="number" id="fW" placeholder="W" /></div>
       <div class="field"><label>Height (in)</label><input type="number" id="fH" placeholder="H" /></div>
-    </div>
-    <div class="field">
-      <label>Default freight class</label>
-      <select id="fFclass">
-        <option value="50">50</option><option value="55">55</option><option value="60">60</option>
-        <option value="65">65</option><option value="70">70</option><option value="77.5">77.5</option>
-        <option value="85">85</option><option value="92.5">92.5</option><option value="100">100</option>
-        <option value="110">110</option><option value="125">125</option><option value="150">150</option>
-        <option value="175">175</option><option value="200">200</option><option value="250">250</option>
-        <option value="300">300</option><option value="400">400</option><option value="500">500</option>
-      </select>
-    </div>
-    <div class="field" style="flex-direction:row;align-items:center;gap:8px;margin-top:4px;">
-      <input type="checkbox" id="fLiftgate" style="width:auto;" />
-      <label style="text-transform:none;font-size:13px;color:#333;letter-spacing:0;" for="fLiftgate">Liftgate available</label>
     </div>
     <div class="ups-section" id="upsSection">
       <div class="ups-section-title">UPS parcel specs (if different from LTL)</div>
@@ -132,6 +172,14 @@
         <div class="field"><label>UPS Height</label><input type="number" id="fUpsH" placeholder="H" /></div>
       </div>
     </div>
+ 
+    <div class="modal-section">Pricing</div>
+    <div class="grid3">
+      <div class="field"><label>Cost ($)</label><input type="number" step="0.01" id="fCost" placeholder="0.00" /></div>
+      <div class="field"><label>List price ($)</label><input type="number" step="0.01" id="fListPrice" placeholder="0.00" /></div>
+      <div class="field"><label>Net price ($)</label><input type="number" step="0.01" id="fNetPrice" placeholder="0.00" /></div>
+    </div>
+ 
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveModel()">Save</button>
@@ -142,7 +190,6 @@
 <div class="toast" id="toast"></div>
  
 <script>
-// Auth check
 const token = sessionStorage.getItem('freightToken');
 const username = sessionStorage.getItem('freightUser');
 if (!token) window.location.href = '/';
@@ -154,23 +201,40 @@ function authHeaders(extra) {
  
 let allEquipment = [];
  
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings', { headers: authHeaders() });
+    if (!res.ok) return;
+    const settings = await res.json();
+    document.getElementById('settingOriginZip').value = settings.default_origin_zip || '03079';
+    document.getElementById('settingFreightClass').value = settings.default_freight_class || '70';
+  } catch(e) { console.error('Failed to load settings:', e); }
+}
+ 
+async function saveSettings() {
+  try {
+    const zip = document.getElementById('settingOriginZip').value.trim();
+    const fc = document.getElementById('settingFreightClass').value;
+    await fetch('/api/settings', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ key: 'default_origin_zip', value: zip || '03079' }) });
+    await fetch('/api/settings', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ key: 'default_freight_class', value: fc }) });
+    showToast('Settings saved');
+  } catch(e) { alert('Error saving settings: ' + e.message); }
+}
+ 
 async function loadEquipment() {
   try {
     const res = await fetch('/api/equipment', { headers: authHeaders() });
     if (res.status === 401) { window.location.href = '/'; return; }
     if (res.status === 503) {
-      document.getElementById('tableContainer').innerHTML = '<div class="loading">Database not yet configured — please set up PostgreSQL on Render first.</div>';
+      document.getElementById('tableContainer').innerHTML = '<div class="loading">Database not yet configured.</div>';
       return;
     }
     allEquipment = await res.json();
-    
-    // If empty, seed from hardcoded data
     if (allEquipment.length === 0) {
       await seedDatabase();
       const res2 = await fetch('/api/equipment', { headers: authHeaders() });
       allEquipment = await res2.json();
     }
-    
     renderTable(allEquipment);
   } catch(e) {
     document.getElementById('tableContainer').innerHTML = '<div class="loading">Error loading data: ' + e.message + '</div>';
@@ -178,30 +242,26 @@ async function loadEquipment() {
 }
  
 async function seedDatabase() {
-  // Seed from the hardcoded EQ data embedded in index.html — fetch it
   try {
     showToast('Initializing database with equipment data...');
-    const res = await fetch('/api/equipment/seed', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ items: SEED_DATA })
-    });
+    const res = await fetch('/api/equipment/seed', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ items: SEED_DATA }) });
     const d = await res.json();
     showToast('Database initialized with ' + d.seeded + ' models');
-  } catch(e) {
-    console.error('Seed error:', e);
-  }
+  } catch(e) { console.error('Seed error:', e); }
+}
+ 
+function fmt(val) {
+  if (val === null || val === undefined || val === '') return '<span class="no-price">—</span>';
+  return '$' + parseFloat(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
  
 function renderTable(items) {
   const complete = items.filter(i => i.weight && i.dim_l).length;
   document.getElementById('statsLabel').textContent = items.length + ' models · ' + complete + ' with specs · ' + (items.length - complete) + ' pending';
- 
   if (!items.length) {
     document.getElementById('tableContainer').innerHTML = '<div class="loading">No models found.</div>';
     return;
   }
- 
   const rows = items.map(item => {
     const hasDims = item.weight && item.dim_l;
     const dims = hasDims ? `${item.dim_l}×${item.dim_w}×${item.dim_h}"` : '<span class="incomplete">—</span>';
@@ -213,20 +273,22 @@ function renderTable(items) {
       <td>${weight}</td>
       <td>${dims}</td>
       <td style="text-align:center;">${liftgate}</td>
-      <td>${item.fclass || '50'}</td>
       <td>${carrierBadge}</td>
+      <td class="price-cell">${fmt(item.cost)}</td>
+      <td class="price-cell">${fmt(item.list_price)}</td>
+      <td class="price-cell">${fmt(item.net_price)}</td>
       <td><div class="actions">
         <button class="btn btn-secondary btn-sm" onclick="openEditModal(${item.id})">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteModel(${item.id}, '${item.model}')">Delete</button>
       </div></td>
     </tr>`;
   }).join('');
- 
   document.getElementById('tableContainer').innerHTML = `
     <table>
       <thead><tr>
         <th>Model</th><th>Weight</th><th>Dimensions (L×W×H)</th>
-        <th style="text-align:center;">Liftgate</th><th>Freight class</th><th>Carrier</th><th>Actions</th>
+        <th style="text-align:center;">Liftgate</th><th>Carrier</th>
+        <th>Cost</th><th>List Price</th><th>Net Price</th><th>Actions</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -237,22 +299,17 @@ function filterTable(q) {
   renderTable(filtered);
 }
  
-function openAddModal() {
-  document.getElementById('modalTitle').textContent = 'Add model';
-  document.getElementById('editId').value = '';
-  document.getElementById('fModel').value = '';
+function clearModal() {
+  ['fModel','fWeight','fL','fW','fH','fUpsWeight','fUpsL','fUpsW','fUpsH','fCost','fListPrice','fNetPrice'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fCarrier').value = 'ltl';
-  document.getElementById('fWeight').value = '';
-  document.getElementById('fL').value = '';
-  document.getElementById('fW').value = '';
-  document.getElementById('fH').value = '';
-  document.getElementById('fFclass').value = '50';
   document.getElementById('fLiftgate').checked = false;
-  document.getElementById('fUpsWeight').value = '';
-  document.getElementById('fUpsL').value = '';
-  document.getElementById('fUpsW').value = '';
-  document.getElementById('fUpsH').value = '';
+  document.getElementById('editId').value = '';
   toggleUpsSection();
+}
+ 
+function openAddModal() {
+  clearModal();
+  document.getElementById('modalTitle').textContent = 'Add model';
   document.getElementById('modalOverlay').classList.add('show');
   document.getElementById('fModel').focus();
 }
@@ -268,23 +325,22 @@ function openEditModal(id) {
   document.getElementById('fL').value = item.dim_l || '';
   document.getElementById('fW').value = item.dim_w || '';
   document.getElementById('fH').value = item.dim_h || '';
-  document.getElementById('fFclass').value = item.fclass || '50';
   document.getElementById('fLiftgate').checked = !!item.liftgate;
   document.getElementById('fUpsWeight').value = item.ups_weight || '';
   document.getElementById('fUpsL').value = item.ups_dim_l || '';
   document.getElementById('fUpsW').value = item.ups_dim_w || '';
   document.getElementById('fUpsH').value = item.ups_dim_h || '';
+  document.getElementById('fCost').value = item.cost || '';
+  document.getElementById('fListPrice').value = item.list_price || '';
+  document.getElementById('fNetPrice').value = item.net_price || '';
   toggleUpsSection();
   document.getElementById('modalOverlay').classList.add('show');
 }
  
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
-}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
  
 function toggleUpsSection() {
-  const carrier = document.getElementById('fCarrier').value;
-  document.getElementById('upsSection').classList.toggle('show', carrier === 'both');
+  document.getElementById('upsSection').classList.toggle('show', document.getElementById('fCarrier').value === 'both');
 }
  
 async function saveModel() {
@@ -296,12 +352,14 @@ async function saveModel() {
     dim_l: document.getElementById('fL').value || null,
     dim_w: document.getElementById('fW').value || null,
     dim_h: document.getElementById('fH').value || null,
-    fclass: document.getElementById('fFclass').value,
     liftgate: document.getElementById('fLiftgate').checked,
     ups_weight: document.getElementById('fUpsWeight').value || null,
     ups_dim_l: document.getElementById('fUpsL').value || null,
     ups_dim_w: document.getElementById('fUpsW').value || null,
     ups_dim_h: document.getElementById('fUpsH').value || null,
+    cost: document.getElementById('fCost').value || null,
+    list_price: document.getElementById('fListPrice').value || null,
+    net_price: document.getElementById('fNetPrice').value || null,
   };
   if (!data.model) { alert('Model number is required'); return; }
   try {
@@ -312,9 +370,7 @@ async function saveModel() {
     closeModal();
     showToast(id ? 'Model updated' : 'Model added');
     await loadEquipment();
-  } catch(e) {
-    alert('Error: ' + e.message);
-  }
+  } catch(e) { alert('Error: ' + e.message); }
 }
  
 async function deleteModel(id, model) {
@@ -324,9 +380,7 @@ async function deleteModel(id, model) {
     if (!res.ok) { const e = await res.json(); alert('Error: ' + e.error); return; }
     showToast(model + ' deleted');
     await loadEquipment();
-  } catch(e) {
-    alert('Error: ' + e.message);
-  }
+  } catch(e) { alert('Error: ' + e.message); }
 }
  
 function showToast(msg) {
@@ -343,14 +397,13 @@ async function doLogout() {
   window.location.href = '/';
 }
  
-// Close modal on overlay click
 document.getElementById('modalOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
 });
  
-// Seed data — current equipment list
 const SEED_DATA = [{"model":"SRM12+","weight":220,"dims":"22x32x42","liftgate":true,"carrier":"ltl"},{"model":"SRM20+","weight":260,"dims":"22x32x42","liftgate":true,"carrier":"ltl"},{"model":"SRMF20+","weight":284,"dims":"36x32x56","liftgate":true,"carrier":"ltl"},{"model":"SRM30+","weight":400,"dims":"36x32x56","liftgate":true,"carrier":"ltl"},{"model":"SRM40+","weight":400,"dims":"36x32x56","liftgate":true,"carrier":"ltl"},{"model":"SRM60+","weight":1000,"dims":"51x41x66","liftgate":true,"carrier":"ltl"},{"model":"SRM60+PM","weight":1000,"dims":"51x41x66","liftgate":true,"carrier":"ltl"},{"model":"SRM60+HD","weight":1000,"dims":"51x41x66","liftgate":true,"carrier":"ltl"},{"model":"SRM80+","weight":1000,"dims":"51x41x66","liftgate":true,"carrier":"ltl"},{"model":"SL50","weight":587,"dims":"41x30x60","liftgate":true,"carrier":"ltl"},{"model":"SL80","weight":1000,"dims":"38x54x64","liftgate":true,"carrier":"ltl"},{"model":"SL120","weight":1190,"dims":"52x35x63","liftgate":null,"carrier":"ltl"},{"model":"SL160","weight":1631,"dims":"65x43x69","liftgate":null,"carrier":"ltl"},{"model":"SL200","weight":1763,"dims":"65x43x69","liftgate":null,"carrier":"ltl"},{"model":"SL280","weight":1940,"dims":"77x49x69","liftgate":null,"carrier":"ltl"},{"model":"SL80RB","weight":1855,"dims":"69x49x65","liftgate":null,"carrier":"ltl"},{"model":"SL120RB","weight":1890,"dims":"69x49x65","liftgate":null,"carrier":"ltl"},{"model":"SL160RB","weight":2215,"dims":"87x65x67","liftgate":null,"carrier":"ltl"},{"model":"SL200RB","weight":2919,"dims":"87x65x67","liftgate":null,"carrier":"ltl"},{"model":"SL250RB","weight":3082,"dims":"93x73x67","liftgate":null,"carrier":"ltl"},{"model":"SL300RB","weight":null,"dims":"93x73x67","liftgate":null,"carrier":"ltl"},{"model":"4612","weight":80,"dims":"33x33x30","liftgate":true,"carrier":"both","upsWeight":113,"upsDims":"25x25x25"},{"model":"6612M","weight":84,"dims":"33x33x26","liftgate":true,"carrier":"ltl"},{"model":"8713M","weight":134,"dims":"33x33x29","liftgate":true,"carrier":"ltl"},{"model":"8713S","weight":160,"dims":"33x33x30","liftgate":true,"carrier":"ltl"},{"model":"1000M","weight":125,"dims":"33x33x30","liftgate":true,"carrier":"ltl"},{"model":"1000S","weight":140,"dims":"33x33x30","liftgate":true,"carrier":"ltl"},{"model":"PM91","weight":110,"dims":"33x33x30","liftgate":true,"carrier":"ltl"},{"model":"PM91G","weight":110,"dims":"33x33x30","liftgate":true,"carrier":"ltl"},{"model":"MG8912","weight":120,"dims":"33x33x30","liftgate":true,"carrier":"ltl"},{"model":"MG22","weight":155,"dims":"24x36x28","liftgate":true,"carrier":"ltl"},{"model":"MG32","weight":465,"dims":"30x57x60","liftgate":true,"carrier":"ltl"},{"model":"MG42","weight":389,"dims":"30x57x60","liftgate":true,"carrier":"ltl"},{"model":"MT975","weight":115,"dims":"23x30x32","liftgate":true,"carrier":"ltl"},{"model":"BC14","weight":110,"dims":"33x33x22","liftgate":true,"carrier":"ltl"},{"model":"BC18","weight":175,"dims":"28x37x28","liftgate":true,"carrier":"ltl"},{"model":"G-peeler","weight":100,"dims":"33x33x37","liftgate":true,"carrier":"ltl"},{"model":"VP40N21","weight":180,"dims":"24x30x25","liftgate":true,"carrier":"ltl"},{"model":"VP50N21","weight":196,"dims":"29x90x26","liftgate":true,"carrier":"ltl"},{"model":"SVC13","weight":16,"dims":"13x18x10","liftgate":null,"carrier":"ltl"},{"model":"Cyclone360","weight":9,"dims":"13x18x6","liftgate":null,"carrier":"ltl"},{"model":"Vortex750","weight":12,"dims":"13x22x7","liftgate":null,"carrier":"ltl"},{"model":"ppress1R","weight":41,"dims":"13x18x11","liftgate":true,"carrier":"ltl"},{"model":"ppress1F","weight":41,"dims":"13x18x11","liftgate":true,"carrier":"ltl"},{"model":"ppress1RF","weight":41,"dims":"13x18x11","liftgate":true,"carrier":"ltl"},{"model":"ppress1.5R","weight":62,"dims":"17x18x11","liftgate":true,"carrier":"ltl"},{"model":"ppress1.5F","weight":62,"dims":"17x18x11","liftgate":true,"carrier":"ltl"},{"model":"ppress1.5RF","weight":62,"dims":"17x18x11","liftgate":true,"carrier":"ltl"},{"model":"ppress2R","weight":81,"dims":"18x23x11","liftgate":true,"carrier":"ltl"},{"model":"ppress2F","weight":81,"dims":"18x23x11","liftgate":true,"carrier":"ltl"},{"model":"ppress2RF","weight":81,"dims":"18x23x11","liftgate":true,"carrier":"ltl"},{"model":"UFP13","weight":58,"dims":"14x29x20","liftgate":null,"carrier":"ltl"},{"model":"Upasta","weight":144,"dims":"23x30x32","liftgate":true,"carrier":"ltl"},{"model":"SG5000","weight":null,"dims":"","liftgate":true,"carrier":"ltl"},{"model":"sprizza40","weight":352,"dims":"30x34x39","liftgate":true,"carrier":"ltl"},{"model":"sprizza50","weight":484,"dims":"35x37x45","liftgate":true,"carrier":"ltl"},{"model":"DR11/14","weight":400,"dims":"35x37x45","liftgate":true,"carrier":"ltl"},{"model":"DR350","weight":400,"dims":"35x37x45","liftgate":true,"carrier":"ltl"},{"model":"ABDR","weight":552,"dims":"30x31x62","liftgate":true,"carrier":"ltl"},{"model":"SBDR","weight":430,"dims":"30x31x62","liftgate":true,"carrier":"ltl"},{"model":"MRD","weight":375,"dims":"30x31x53","liftgate":true,"carrier":"ltl"},{"model":"SRD","weight":507,"dims":"30x31x53","liftgate":true,"carrier":"ltl"},{"model":"ARD","weight":507,"dims":"30x31x53","liftgate":true,"carrier":"ltl"},{"model":"MQD","weight":375,"dims":"30x31x53","liftgate":true,"carrier":"ltl"},{"model":"AQD","weight":507,"dims":"30x31x53","liftgate":true,"carrier":"ltl"},{"model":"SQD","weight":507,"dims":"30x31x53","liftgate":true,"carrier":"ltl"},{"model":"SFG500B","weight":363,"dims":"34x51x44","liftgate":null,"carrier":"ltl"},{"model":"SFG500T","weight":654,"dims":"35x52x63","liftgate":null,"carrier":"ltl"},{"model":"SFG500TM","weight":653,"dims":"35x52x63","liftgate":null,"carrier":"ltl"},{"model":"SFG600TM","weight":675,"dims":"35x52x63","liftgate":null,"carrier":"ltl"},{"model":"SFG600TMM","weight":737,"dims":"34x55x73","liftgate":null,"carrier":"ltl"},{"model":"SFG600TL","weight":715,"dims":"34x55x73","liftgate":null,"carrier":"ltl"},{"model":"T50","weight":272,"dims":"26x39x39","liftgate":true,"carrier":"ltl"},{"model":"DF1.5","weight":null,"dims":"","liftgate":null,"carrier":"ltl"},{"model":"DF3","weight":null,"dims":"","liftgate":null,"carrier":"ltl"},{"model":"VS9","weight":24,"dims":"13x13x19","liftgate":false,"carrier":"ups"},{"model":"VS9H","weight":24,"dims":"13x13x19","liftgate":false,"carrier":"ups"},{"model":"ALMFC12","weight":12,"dims":"15x15x6","liftgate":false,"carrier":"ups"},{"model":"1404","weight":36,"dims":"17x17x17","liftgate":false,"carrier":"ups"},{"model":"1405","weight":36,"dims":"17x17x17","liftgate":false,"carrier":"ups"},{"model":"1406","weight":36,"dims":"17x17x17","liftgate":false,"carrier":"ups"},{"model":"FA73","weight":16,"dims":"13x13x13","liftgate":false,"carrier":"ups"}];
  
+loadSettings();
 loadEquipment();
 </script>
 </body>

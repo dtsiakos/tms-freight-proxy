@@ -73,16 +73,13 @@ async function initDB() {
         ups_dim_w NUMERIC(8,2),
         ups_dim_h NUMERIC(8,2),
         cost NUMERIC(10,2),
-        list_price NUMERIC(10,2),
-        net_price NUMERIC(10,2),
         freight_class VARCHAR(10),
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
     // Add new columns to existing databases
     await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS cost NUMERIC(10,2)`);
-    await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS list_price NUMERIC(10,2)`);
-    await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS net_price NUMERIC(10,2)`);
+ 
     await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS freight_class VARCHAR(10)`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS settings (
@@ -165,15 +162,15 @@ app.put('/api/equipment/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { model, weight, dim_l, dim_w, dim_h, liftgate, carrier,
             ups_weight, ups_dim_l, ups_dim_w, ups_dim_h,
-            cost, list_price, net_price, freight_class } = req.body;
+            cost, freight_class } = req.body;
     const result = await pool.query(
       `UPDATE equipment SET model=$1, weight=$2, dim_l=$3, dim_w=$4, dim_h=$5,
        liftgate=$6, carrier=$7, ups_weight=$8, ups_dim_l=$9, ups_dim_w=$10, ups_dim_h=$11,
-       cost=$12, list_price=$13, net_price=$14, freight_class=$15,
-       updated_at=NOW() WHERE id=$16 RETURNING *`,
+       cost=$12, freight_class=$13,
+       updated_at=NOW() WHERE id=$14 RETURNING *`,
       [model, weight||null, dim_l||null, dim_w||null, dim_h||null,
        liftgate, carrier, ups_weight||null, ups_dim_l||null, ups_dim_w||null, ups_dim_h||null,
-       cost||null, list_price||null, net_price||null, freight_class||null,
+       cost||null, freight_class||null,
        req.params.id]
     );
     res.json(result.rows[0]);
@@ -186,15 +183,15 @@ app.post('/api/equipment', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { model, weight, dim_l, dim_w, dim_h, liftgate, carrier,
             ups_weight, ups_dim_l, ups_dim_w, ups_dim_h,
-            cost, list_price, net_price, freight_class } = req.body;
+            cost, freight_class } = req.body;
     const result = await pool.query(
       `INSERT INTO equipment (model, weight, dim_l, dim_w, dim_h, liftgate, carrier,
-       ups_weight, ups_dim_l, ups_dim_w, ups_dim_h, cost, list_price, net_price, freight_class)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+       ups_weight, ups_dim_l, ups_dim_w, ups_dim_h, cost, freight_class)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
       [model, weight||null, dim_l||null, dim_w||null, dim_h||null,
        liftgate||false, carrier||'ltl',
        ups_weight||null, ups_dim_l||null, ups_dim_w||null, ups_dim_h||null,
-       cost||null, list_price||null, net_price||null, freight_class||null]
+       cost||null, freight_class||null]
     );
     res.json(result.rows[0]);
   } catch (err) {

@@ -1,627 +1,304 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Univex Freight Quote Tool</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
-  .container { max-width: 620px; margin: 0 auto; }
-  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
-  .sec-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  .field { display: flex; flex-direction: column; gap: 5px; }
-  label { font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
-  input, select { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #fff; color: #1a1a1a; font-family: inherit; transition: border-color 0.15s; appearance: none; }
-  input:focus, select:focus { outline: none; border-color: #0099D6; box-shadow: 0 0 0 3px rgba(0,153,214,0.1); }
-  input[readonly] { background: #f9f9f9; color: #666; cursor: default; }
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
-  .model-wrap { position: relative; }
-  .dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; margin-top: 3px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-  .dd-item { padding: 9px 12px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
-  .dd-item:last-child { border-bottom: none; }
-  .dd-item:hover, .dd-item.hi { background: #f5f7ff; }
-  .dd-hint { font-size: 11px; color: #999; }
-  .specs-row { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
-  .spec-tag { font-size: 12px; background: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 20px; padding: 3px 10px; color: #666; display: none; }
-  .spec-tag.show { display: inline-block; }
-  .loaded-tag { font-size: 12px; color: #0077AA; background: #e8f6fd; border: 1px solid #b3e0f5; border-radius: 20px; padding: 3px 10px; display: none; }
-  .loaded-tag.show { display: inline-block; }
-  /* Pricing panel */
-  .pricing-panel { display: none; margin-top: 12px; background: #f9fafb; border: 1px solid #e5e5e5; border-radius: 10px; padding: 12px 14px; }
-  .pricing-panel.show { display: block; }
-  .pricing-panel-title { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
-  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .price-item { text-align: center; }
-  .price-item-label { font-size: 10px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
-  .price-item-value { font-size: 16px; font-weight: 700; color: #1a1a1a; }
-  .price-item-value.no-price { font-size: 13px; font-weight: 400; color: #ccc; font-style: italic; }
-  .price-item.cost .price-item-value { color: #b91c1c; }
-  .price-item.list .price-item-value { color: #0077AA; }
-  .price-item.net .price-item-value { color: #166534; }
-  .divider { border: none; border-top: 1px solid #f0f0f0; margin: 1rem 0; }
-  .acc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .acc-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; cursor: pointer; padding: 8px 10px; border: 1px solid #e5e5e5; border-radius: 8px; user-select: none; transition: all 0.12s; }
-  .acc-item:hover { background: #f5f7ff; border-color: #b3e0f5; }
-  .acc-item.checked { border-color: #0099D6; background: #e8f6fd; color: #0077AA; }
-  .acc-item.checked .chk { background: #0099D6; border-color: #0099D6; }
-  .acc-item.checked .chk::after { display: block; }
-  .chk { width: 15px; height: 15px; border: 1.5px solid #ccc; border-radius: 3px; flex-shrink: 0; position: relative; background: #fff; transition: all 0.12s; }
-  .chk::after { content: ''; display: none; position: absolute; left: 4px; top: 1px; width: 5px; height: 8px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(45deg); }
-  .btn { width: 100%; padding: 12px; background: #0099D6; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 14px; transition: background 0.15s; }
-  .btn:hover { background: #0077AA; }
-  .btn:disabled { background: #ccc; cursor: not-allowed; }
-  .origin-note { font-size: 11px; color: #0099D6; margin-top: 3px; }
-  .error { font-size: 13px; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; margin-top: 10px; display: none; line-height: 1.5; }
-  .status-bar { display: none; align-items: center; gap: 10px; font-size: 13px; color: #555; background: #f9f9f9; border-radius: 8px; padding: 10px 13px; margin-top: 10px; }
-  .status-bar.show { display: flex; }
-  .spinner { width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .results { display: none; margin-top: 0; }
-  .results.show { display: block; }
-  .results-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
-  .results-title { font-size: 15px; font-weight: 600; }
-  .results-meta { font-size: 12px; color: #999; }
-  .quote-card { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #e5e5e5; border-radius: 10px; margin-bottom: 8px; background: #fff; }
-  .quote-card.best { border: 2px solid #0099D6; background: #e8f6fd; }
-  .carrier-badge { width: 42px; height: 42px; border-radius: 8px; background: #f5f5f5; border: 1px solid #e5e5e5; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #666; text-align: center; line-height: 1.2; flex-shrink: 0; }
-  .quote-card.best .carrier-badge { background: #cceef9; border-color: #b3e0f5; color: #0077AA; }
-  .carrier-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
-  .carrier-sub { font-size: 12px; color: #888; margin-top: 2px; }
-  .price-col { text-align: right; white-space: nowrap; }
-  .price-total { font-size: 18px; font-weight: 700; color: #1a1a1a; }
-  .price-label { font-size: 11px; color: #aaa; margin-top: 1px; }
-  .badge-best { display: inline-block; font-size: 10px; font-weight: 600; background: #0099D6; color: #fff; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
-  .notice { font-size: 12px; color: #999; padding: 10px 14px; background: #fafafa; border-radius: 8px; line-height: 1.6; border-left: 3px solid #e5e5e5; margin-top: 1rem; }
-  .api-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border-radius: 20px; padding: 4px 10px; margin-bottom: 14px; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-weight: 500; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; }
-  .raw-response { font-size: 12px; color: #666; background: #f5f5f5; border-radius: 8px; padding: 10px 12px; font-family: monospace; word-break: break-all; margin-top: 8px; white-space: pre-wrap; }
-  @media (max-width: 480px) { .acc-grid { grid-template-columns: 1fr; } }
-</style>
-</head>
-<body>
-<div class="container">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;">
-    <div>
-      <img src="/logo.png" alt="Univex" style="height:48px;margin-bottom:10px;display:block;" onerror="this.style.display='none'" />
-      <h1 style="font-size:22px;font-weight:600;">Freight quote tool</h1>
-      <p style="font-size:14px;color:#666;margin-top:4px;">Select a model and destination to get contracted carrier rates</p>
-    </div>
-    <div style="text-align:right;">
-      <div id="userLabel" style="font-size:12px;color:#888;margin-bottom:6px;"></div>
-      <span id="adminLink" style="display:none;"><a href="/admin" style="font-size:12px;color:#0099D6;text-decoration:none;padding:5px 10px;border:1px solid #b3e0f5;border-radius:6px;background:#e8f6fd;margin-right:6px;">⚙ Admin</a></span>
-      <button onclick="doLogout()" style="font-size:12px;padding:5px 12px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-family:inherit;color:#555;">Sign out</button>
-    </div>
-  </div>
+const express = require('express');
+const cors = require('cors');
+const fetch = require('node-fetch');
+const path = require('path');
+const crypto = require('crypto');
+const { Pool } = require('pg');
  
-  <div class="api-badge"><div class="dot"></div>Live — TMS contracted rates</div>
+const app = express();
+const PORT = process.env.PORT || 3000;
+const TMS_BASE = 'https://restapiv7.tmssaas.com';
+const SHIPPO_TOKEN = process.env.SHIPPO_TOKEN;
+const TMS_USER = process.env.TMS_USER || 'RatingTool';
+const TMS_PASS = process.env.TMS_PASSWORD || '';
+const TMS_SRV_TOKEN = process.env.TMS_SRV_TOKEN || '';
+const ADMIN_USERS = (process.env.ADMIN_USERS || 'DT').split(',').map(u => u.trim());
  
-  <div class="card">
-    <div class="sec-label">Equipment</div>
-    <div class="field" style="margin-bottom:10px;">
-      <label>Model number</label>
-      <div class="model-wrap" id="modelWrap">
-        <input type="text" id="modelInput" placeholder="Type to search — e.g. SRM60+, SL120, MG42..." autocomplete="off" />
-        <div class="dropdown" id="dd"></div>
-      </div>
-    </div>
-    <div class="specs-row">
-      <span class="spec-tag" id="tagW"></span>
-      <span class="spec-tag" id="tagD"></span>
-      <span class="loaded-tag" id="tagOk">Specs loaded</span>
-    </div>
+const pool = process.env.DATABASE_URL ? new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  family: 4
+}) : null;
  
-    <!-- Pricing panel -->
-    <div class="pricing-panel" id="pricingPanel">
-      <div class="pricing-panel-title">Product pricing</div>
-      <div class="pricing-grid">
-        <div class="price-item cost">
-          <div class="price-item-label">Cost</div>
-          <div class="price-item-value no-price" id="priceCost">—</div>
-        </div>
-        <div class="price-item list">
-          <div class="price-item-label">List Price</div>
-          <div class="price-item-value no-price" id="priceList">—</div>
-        </div>
-        <div class="price-item net">
-          <div class="price-item-label">Net Price</div>
-          <div class="price-item-value no-price" id="priceNet">—</div>
-        </div>
-      </div>
-    </div>
+const sessions = {};
  
-    <div class="divider"></div>
-    <div class="sec-label">Shipment</div>
-    <div class="grid2" style="margin-bottom:10px;">
-      <div class="field">
-        <label>Origin zip</label>
-        <input type="text" id="origZip" value="03079" maxlength="5" />
-        <div class="origin-note" id="origNote">Salem, NH (default)</div>
-      </div>
-      <div class="field">
-        <label>Destination zip</label>
-        <input type="text" id="destZip" placeholder="e.g. 75093" maxlength="5" />
-      </div>
-    </div>
- 
-    <div class="divider"></div>
-    <div class="sec-label">Product details</div>
-    <div class="grid3" style="margin-bottom:10px;">
-      <div class="field"><label>Weight (lbs)</label><input type="text" id="weight" readonly placeholder="—" /></div>
-      <div class="field">
-        <label>Freight class</label>
-        <select id="fclass">
-          <option value="50">50</option><option value="55">55</option><option value="60">60</option>
-          <option value="65">65</option><option value="70">70</option><option value="77.5">77.5</option>
-          <option value="85">85</option><option value="92.5">92.5</option><option value="100">100</option>
-          <option value="110">110</option><option value="125">125</option><option value="150" selected>150</option>
-          <option value="175">175</option><option value="200">200</option><option value="250">250</option>
-          <option value="300">300</option><option value="400">400</option><option value="500">500</option>
-        </select>
-      </div>
-      <div class="field"><label>Pallets</label><input type="number" id="pallets" value="1" min="1" /></div>
-    </div>
-    <div class="grid3">
-      <div class="field"><label>Length (in)</label><input type="text" id="dimL" readonly placeholder="—" /></div>
-      <div class="field"><label>Width (in)</label><input type="text" id="dimW" readonly placeholder="—" /></div>
-      <div class="field"><label>Height (in)</label><input type="text" id="dimH" readonly placeholder="—" /></div>
-    </div>
- 
-    <div class="divider"></div>
-    <div class="sec-label">Freight markup</div>
-    <div class="field" style="margin-bottom:10px;max-width:160px;">
-      <select id="markupRange">
-        <option value="0">0% — no markup</option>
-        <option value="5">5%</option><option value="10">10%</option>
-        <option value="15" selected>15%</option><option value="20">20%</option>
-        <option value="25">25%</option><option value="30">30%</option>
-      </select>
-    </div>
-    <div class="divider"></div>
-    <div id="accSection">
-      <div class="sec-label">Accessorials</div>
-      <div class="acc-grid">
-        <div class="acc-item" data-val="LGD"><div class="chk"></div>Liftgate delivery</div>
-        <div class="acc-item" data-val="NOD"><div class="chk"></div>Notification prior to delivery</div>
-      </div>
-    </div>
- 
-    <div class="error" id="errBox"></div>
-    <div class="status-bar" id="statusBar"><div class="spinner"></div><span id="statusText">Connecting...</span></div>
-    <button class="btn" id="quoteBtn">Get freight quotes</button>
-  </div>
- 
-  <div class="results" id="resultsBox">
-    <div class="results-header">
-      <span class="results-title">Carrier rates</span>
-      <span class="results-meta" id="resultsMeta"></span>
-    </div>
-    <div id="quoteList"></div>
-  </div>
- 
-  <div class="notice">For reference only — no freight can be booked through this tool. Confirm final rates with the carrier before committing to a customer price.</div>
-</div>
- 
-<script>
-(function() {
-  if (!sessionStorage.getItem('freightToken')) window.location.href = '/';
-})();
- 
-window.addEventListener('DOMContentLoaded', () => { loadEquipment(); loadSettings(); });
- 
-let EQ = [];
-let defaultFreightClass = '70';
- 
-async function loadEquipment() {
-  try {
-    const res = await fetch('/api/equipment', { headers: authHeaders() });
-    if (!res.ok) return;
-    const rows = await res.json();
-    EQ = rows.map(r => ({
-      model: r.model,
-      weight: r.weight,
-      dims: (r.dim_l && r.dim_w && r.dim_h) ? r.dim_l + 'x' + r.dim_w + 'x' + r.dim_h : '',
-      liftgate: r.liftgate,
-      carrier: r.carrier || 'ltl',
-      upsWeight: r.ups_weight,
-      upsDims: (r.ups_dim_l && r.ups_dim_w && r.ups_dim_h) ? r.ups_dim_l + 'x' + r.ups_dim_w + 'x' + r.ups_dim_h : null,
-      cost: r.cost,
-      list_price: r.list_price,
-      net_price: r.net_price,
-      freight_class: r.freight_class
-    }));
-  } catch(e) { console.error('Failed to load equipment:', e); }
-}
- 
-async function loadSettings() {
-  try {
-    const res = await fetch('/api/settings', { headers: authHeaders() });
-    if (!res.ok) return;
-    const settings = await res.json();
-    const zip = settings.default_origin_zip || '03079';
-    document.getElementById('origZip').value = zip;
-    document.getElementById('origNote').textContent = zip === '03079' ? 'Salem, NH (default)' : '';
-    defaultFreightClass = settings.default_freight_class || '70';
-    document.getElementById('fclass').value = defaultFreightClass;
-  } catch(e) { console.error('Failed to load settings:', e); }
-}
- 
-function authHeaders(extra) {
-  return Object.assign({ 'Content-Type': 'application/json', 'x-session-token': sessionStorage.getItem('freightToken') || '' }, extra || {});
-}
- 
-const CREDS = { userName: 'RatingTool', password: 'Test_Admin@12', srvToken: '' };
-let sel = null, hiIdx = -1, authToken = null;
- 
-const modelInput = document.getElementById('modelInput');
-const dd = document.getElementById('dd');
-const quoteBtn = document.getElementById('quoteBtn');
- 
-modelInput.addEventListener('input', onType);
-modelInput.addEventListener('keydown', onKey);
-modelInput.addEventListener('blur', () => setTimeout(closeDd, 150));
-document.querySelectorAll('.acc-item').forEach(el => el.addEventListener('click', () => el.classList.toggle('checked')));
-document.getElementById('origZip').addEventListener('input', function() {
-  document.getElementById('origNote').textContent = this.value === '03079' ? 'Salem, NH (default)' : '';
-});
-quoteBtn.addEventListener('click', getQuotes);
-document.addEventListener('click', e => { if (!e.target.closest('#modelWrap')) closeDd(); });
- 
-function onType() {
-  const q = modelInput.value.trim().toLowerCase();
-  sel = null; clearSpecs();
-  if (!q) { closeDd(); return; }
-  const hits = EQ.filter(e => e.model.toLowerCase().includes(q)).slice(0, 10);
-  if (!hits.length) { closeDd(); return; }
-  dd.innerHTML = ''; hiIdx = -1;
-  hits.forEach(item => {
-    const d = document.createElement('div');
-    d.className = 'dd-item';
-    d.innerHTML = `<span>${item.model}</span><span class="dd-hint">${item.weight ? item.weight + ' lbs' : 'no specs'} · ${item.dims ? item.dims + '"' : '—'}</span>`;
-    d.addEventListener('mousedown', () => pick(item));
-    dd.appendChild(d);
+function getUsers() {
+  const raw = process.env.USERS || '';
+  const users = {};
+  raw.split(',').forEach(pair => {
+    const idx = pair.indexOf(':');
+    if (idx > 0) {
+      const u = pair.slice(0, idx).trim();
+      const p = pair.slice(idx + 1).trim();
+      if (u && p) users[u] = p;
+    }
   });
-  dd.style.display = 'block';
+  return users;
 }
  
-function fmtPrice(val) {
-  if (val === null || val === undefined || val === '') return null;
-  const n = parseFloat(val);
-  if (isNaN(n)) return null;
-  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
- 
-function setPriceEl(elId, val) {
-  const el = document.getElementById(elId);
-  const formatted = fmtPrice(val);
-  if (formatted) {
-    el.textContent = formatted;
-    el.className = 'price-item-value';
+function requireAuth(req, res, next) {
+  const token = req.headers['x-session-token'];
+  if (token && sessions[token] && sessions[token].expires > Date.now()) {
+    req.username = sessions[token].username;
+    next();
   } else {
-    el.textContent = '—';
-    el.className = 'price-item-value no-price';
+    res.status(401).json({ error: 'Unauthorized' });
   }
 }
  
-function pick(item) {
-  sel = item;
-  modelInput.value = item.model;
-  const p = item.dims ? item.dims.split('x') : [];
-  document.getElementById('weight').value = item.weight || '';
-  document.getElementById('dimL').value = p[0] || '';
-  document.getElementById('dimW').value = p[1] || '';
-  document.getElementById('dimH').value = p[2] || '';
- 
-  // Spec tags
-  if (item.weight && item.dims) {
-    document.getElementById('tagW').textContent = item.weight + ' lbs';
-    document.getElementById('tagW').classList.add('show');
-    document.getElementById('tagD').textContent = item.dims + '"';
-    document.getElementById('tagD').classList.add('show');
-    document.getElementById('tagOk').classList.add('show');
+function requireAdmin(req, res, next) {
+  if (ADMIN_USERS.includes(req.username)) {
+    next();
   } else {
-    document.getElementById('tagW').textContent = 'Specs not yet available';
-    document.getElementById('tagW').classList.add('show');
-    document.getElementById('tagD').classList.remove('show');
-    document.getElementById('tagOk').classList.remove('show');
+    res.status(403).json({ error: 'Admin access required' });
   }
- 
-  // Set freight class — use item-specific class if set, otherwise fall back to default
-  const fclassEl = document.getElementById('fclass');
-  if (item.freight_class) {
-    fclassEl.value = item.freight_class;
-  } else {
-    fclassEl.value = defaultFreightClass;
-  }
- 
-  // Pricing panel — always show when a model is selected, populate what we have
-  setPriceEl('priceCost', item.cost);
-  setPriceEl('priceList', item.list_price);
-  setPriceEl('priceNet', item.net_price);
-  document.getElementById('pricingPanel').classList.add('show');
- 
-  // Freight class enabled/disabled for UPS
-  if (item.carrier === 'ups') {
-    fclassEl.disabled = true;
-    fclassEl.style.opacity = '0.4';
-    fclassEl.style.cursor = 'not-allowed';
-  } else {
-    fclassEl.disabled = false;
-    fclassEl.style.opacity = '1';
-    fclassEl.style.cursor = 'pointer';
-  }
- 
-  // Accessorials
-  const liftgateEl = document.querySelector('.acc-item[data-val="LGD"]');
-  if (item.carrier === 'ups') {
-    document.getElementById('accSection').style.display = 'none';
-  } else {
-    document.getElementById('accSection').style.display = 'block';
-    if (item.liftgate === true) {
-      liftgateEl.classList.remove('disabled');
-      liftgateEl.style.opacity = '1';
-      liftgateEl.style.cursor = 'pointer';
-      liftgateEl.style.pointerEvents = 'auto';
-    } else {
-      liftgateEl.classList.remove('checked');
-      liftgateEl.classList.add('disabled');
-      liftgateEl.style.opacity = '0.4';
-      liftgateEl.style.cursor = 'not-allowed';
-      liftgateEl.style.pointerEvents = 'none';
-    }
-  }
-  closeDd();
 }
  
-function clearSpecs() {
-  ['tagW','tagD','tagOk'].forEach(id => document.getElementById(id).classList.remove('show'));
-  ['weight','dimL','dimW','dimH'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('pricingPanel').classList.remove('show');
-  document.getElementById('fclass').value = defaultFreightClass;
-}
- 
-function closeDd() { dd.style.display = 'none'; hiIdx = -1; modelInput.blur(); }
- 
-function onKey(e) {
-  const items = dd.querySelectorAll('.dd-item');
-  if (!items.length) return;
-  if (e.key === 'ArrowDown') { hiIdx = Math.min(hiIdx+1, items.length-1); hl(items); e.preventDefault(); }
-  else if (e.key === 'ArrowUp') { hiIdx = Math.max(hiIdx-1, 0); hl(items); e.preventDefault(); }
-  else if (e.key === 'Enter' && hiIdx >= 0) { items[hiIdx].dispatchEvent(new Event('mousedown')); e.preventDefault(); }
-  else if (e.key === 'Escape') closeDd();
-}
-function hl(items) { items.forEach((it,i) => it.classList.toggle('hi', i===hiIdx)); if(hiIdx>=0) items[hiIdx].scrollIntoView({block:'nearest'}); }
- 
-async function getToken() {
-  const res = await fetch('/login', { method: 'POST', headers: authHeaders(), body: JSON.stringify(CREDS) });
-  if (!res.ok) throw new Error('Login failed: ' + res.status);
-  const text = await res.text();
-  try { const j = JSON.parse(text); return j.token || j.Token || text.replace(/"/g,''); }
-  catch(e) { return text.replace(/"/g,''); }
-}
- 
-async function getQuotes() {
-  const err = document.getElementById('errBox');
-  const sb = document.getElementById('statusBar');
-  const st = document.getElementById('statusText');
-  err.style.display = 'none';
-  document.getElementById('resultsBox').classList.remove('show');
- 
-  if (!sel) { err.textContent = 'Please select a model from the dropdown.'; err.style.display = 'block'; return; }
-  const dest = document.getElementById('destZip').value.trim();
-  if (!dest || dest.length !== 5 || isNaN(dest)) { err.textContent = 'Please enter a valid 5-digit destination zip.'; err.style.display = 'block'; return; }
-  if (sel.carrier !== 'ups' && sel.carrier !== 'both' && (!sel.weight || !sel.dims)) {
-    err.textContent = 'Specs not yet available for this model — cannot generate a quote.';
-    err.style.display = 'block'; return;
-  }
- 
-  quoteBtn.disabled = true;
-  sb.classList.add('show');
-  const orig = document.getElementById('origZip').value.trim() || '03079';
-  const fclass = document.getElementById('fclass').value;
-  const pallets = parseInt(document.getElementById('pallets').value) || 1;
-  const p = sel.dims ? sel.dims.split('x') : [];
-  const accs = Array.from(document.querySelectorAll('.acc-item.checked')).map(el => el.dataset.val);
-  const markupPct = parseFloat(document.getElementById('markupRange').value || 15) / 100;
- 
+async function initDB() {
+  if (!pool) return;
   try {
-    if (sel.carrier === 'ups' || sel.carrier === 'both') {
-      st.textContent = sel.carrier === 'both' ? 'Fetching UPS & LTL rates...' : 'Fetching UPS rates...';
-      const upsWeight = sel.upsWeight || sel.weight;
-      const upsDims = sel.upsDims ? sel.upsDims.split('x') : p;
-      const upsRes = await fetch('/ups-rates', {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ origZip: orig, destZip: dest, weight: upsWeight, length: parseFloat(upsDims[0])||12, width: parseFloat(upsDims[1])||12, height: parseFloat(upsDims[2])||12 })
-      });
-      if (!upsRes.ok) { const txt = await upsRes.text(); throw new Error('UPS API error ' + upsRes.status + ': ' + txt.slice(0,200)); }
-      const upsData = await upsRes.json();
-      if (sel.carrier === 'ups') {
-        sb.classList.remove('show');
-        renderUPSResults(upsData.rates || [], orig, dest, sel.model, sel.weight, markupPct);
-        quoteBtn.disabled = false; return;
-      }
-      if (!authToken) { st.textContent = 'Authenticating with TMS...'; authToken = await getToken(); }
-      st.textContent = 'Fetching LTL rates...';
-      const ltlPayload = {
-        OrigZip: orig, OrigCity: '', OrigState: '', OrigCountry: 'US',
-        DestZip: dest, DestCity: '', DestState: '', DestCountry: 'US',
-        ShipmentDate: new Date().toISOString().split('T')[0], UserToken: authToken,
-        Shipments: [{ Description: sel.model, Pallets: pallets, Pieces: pallets, Weight: sel.weight, Class: fclass, Length: parseFloat(p[0])||0, Width: parseFloat(p[1])||0, Height: parseFloat(p[2])||0, IsHazmat: false, IsStackable: false }],
-        AccessorialCodes: accs
-      };
-      const ltlRes = await fetch('/rates', { method: 'POST', headers: authHeaders({ 'usertoken': authToken }), body: JSON.stringify(ltlPayload) });
-      if (!ltlRes.ok) {
-        if (ltlRes.status === 401) { authToken = null; throw new Error('Session expired — please try again.'); }
-        const txt = await ltlRes.text(); throw new Error('LTL API error ' + ltlRes.status + ': ' + txt.slice(0,300));
-      }
-      const ltlData = await ltlRes.json();
-      sb.classList.remove('show');
-      renderCombinedResults(upsData.rates || [], ltlData, orig, dest, sel.model, sel.weight, fclass, markupPct);
-      quoteBtn.disabled = false; return;
-    }
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS equipment (
+        id SERIAL PRIMARY KEY,
+        model VARCHAR(50) UNIQUE NOT NULL,
+        weight INTEGER,
+        dim_l NUMERIC(8,2),
+        dim_w NUMERIC(8,2),
+        dim_h NUMERIC(8,2),
+        liftgate BOOLEAN,
+        carrier VARCHAR(10) DEFAULT 'ltl',
+        ups_weight INTEGER,
+        ups_dim_l NUMERIC(8,2),
+        ups_dim_w NUMERIC(8,2),
+        ups_dim_h NUMERIC(8,2),
+        cost NUMERIC(10,2),
+        list_price NUMERIC(10,2),
+        net_price NUMERIC(10,2),
+        freight_class VARCHAR(10),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    // Add new columns to existing databases
+    await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS cost NUMERIC(10,2)`);
+    await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS list_price NUMERIC(10,2)`);
+    await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS net_price NUMERIC(10,2)`);
+    await pool.query(`ALTER TABLE equipment ADD COLUMN IF NOT EXISTS freight_class VARCHAR(10)`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+    await pool.query(`INSERT INTO settings (key, value) VALUES ('default_origin_zip', '03079') ON CONFLICT (key) DO NOTHING`);
+    await pool.query(`INSERT INTO settings (key, value) VALUES ('default_freight_class', '70') ON CONFLICT (key) DO NOTHING`);
+    console.log('Database ready');
+  } catch (err) {
+    console.error('DB init error:', err.message);
+  }
+}
  
-    if (!authToken) { st.textContent = 'Authenticating with TMS...'; authToken = await getToken(); }
-    st.textContent = 'Fetching your contracted rates...';
-    const payload = {
-      OrigZip: orig, OrigCity: '', OrigState: '', OrigCountry: 'US',
-      DestZip: dest, DestCity: '', DestState: '', DestCountry: 'US',
-      ShipmentDate: new Date().toISOString().split('T')[0], UserToken: authToken,
-      Shipments: [{ Description: sel.model, Pallets: pallets, Pieces: pallets, Weight: sel.weight, Class: fclass, Length: parseFloat(p[0])||0, Width: parseFloat(p[1])||0, Height: parseFloat(p[2])||0, IsHazmat: false, IsStackable: false }],
-      AccessorialCodes: accs
+app.use(cors());
+app.use(express.json());
+ 
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/tool', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.use(express.static(path.join(__dirname, 'public')));
+ 
+app.post('/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  const users = getUsers();
+  if (users[username] && users[username] === password) {
+    const token = crypto.randomBytes(32).toString('hex');
+    sessions[token] = { username, expires: Date.now() + 8 * 60 * 60 * 1000 };
+    console.log('Login:', username);
+    res.json({ token, username, isAdmin: ADMIN_USERS.includes(username) });
+  } else {
+    res.status(401).json({ error: 'Invalid username or password' });
+  }
+});
+ 
+app.post('/auth/logout', (req, res) => {
+  const token = req.headers['x-session-token'];
+  if (token) delete sessions[token];
+  res.json({ ok: true });
+});
+ 
+app.get('/api/settings', requireAuth, async (req, res) => {
+  try {
+    if (!pool) return res.json({});
+    const result = await pool.query('SELECT key, value FROM settings');
+    const settings = {};
+    result.rows.forEach(r => { settings[r.key] = r.value; });
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.post('/api/settings', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    if (!key) return res.status(400).json({ error: 'key is required' });
+    await pool.query(
+      `INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+      [key, value]
+    );
+    res.json({ ok: true, key, value });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.get('/api/equipment', requireAuth, async (req, res) => {
+  try {
+    if (!pool) return res.status(503).json({ error: 'Database not configured' });
+    const result = await pool.query('SELECT * FROM equipment ORDER BY model ASC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.put('/api/equipment/:id', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { model, weight, dim_l, dim_w, dim_h, liftgate, carrier,
+            ups_weight, ups_dim_l, ups_dim_w, ups_dim_h,
+            cost, list_price, net_price, freight_class } = req.body;
+    const result = await pool.query(
+      `UPDATE equipment SET model=$1, weight=$2, dim_l=$3, dim_w=$4, dim_h=$5,
+       liftgate=$6, carrier=$7, ups_weight=$8, ups_dim_l=$9, ups_dim_w=$10, ups_dim_h=$11,
+       cost=$12, list_price=$13, net_price=$14, freight_class=$15,
+       updated_at=NOW() WHERE id=$16 RETURNING *`,
+      [model, weight||null, dim_l||null, dim_w||null, dim_h||null,
+       liftgate, carrier, ups_weight||null, ups_dim_l||null, ups_dim_w||null, ups_dim_h||null,
+       cost||null, list_price||null, net_price||null, freight_class||null,
+       req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.post('/api/equipment', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { model, weight, dim_l, dim_w, dim_h, liftgate, carrier,
+            ups_weight, ups_dim_l, ups_dim_w, ups_dim_h,
+            cost, list_price, net_price, freight_class } = req.body;
+    const result = await pool.query(
+      `INSERT INTO equipment (model, weight, dim_l, dim_w, dim_h, liftgate, carrier,
+       ups_weight, ups_dim_l, ups_dim_w, ups_dim_h, cost, list_price, net_price, freight_class)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+      [model, weight||null, dim_l||null, dim_w||null, dim_h||null,
+       liftgate||false, carrier||'ltl',
+       ups_weight||null, ups_dim_l||null, ups_dim_w||null, ups_dim_h||null,
+       cost||null, list_price||null, net_price||null, freight_class||null]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.delete('/api/equipment/:id', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM equipment WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.post('/api/equipment/seed', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { items } = req.body;
+    let count = 0;
+    for (const item of items) {
+      const p = item.dims ? item.dims.split('x') : [];
+      const up = item.upsDims ? item.upsDims.split('x') : [];
+      await pool.query(
+        `INSERT INTO equipment (model, weight, dim_l, dim_w, dim_h, liftgate, carrier, ups_weight, ups_dim_l, ups_dim_w, ups_dim_h)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (model) DO NOTHING`,
+        [item.model, item.weight||null, p[0]||null, p[1]||null, p[2]||null,
+         item.liftgate||false, item.carrier||'ltl',
+         item.upsWeight||null, up[0]||null, up[1]||null, up[2]||null]
+      );
+      count++;
+    }
+    res.json({ seeded: count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.post('/login', requireAuth, async (req, res) => {
+  try {
+    const response = await fetch(TMS_BASE + '/ShipmentLiteService/Login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ userName: TMS_USER, password: TMS_PASS, srvToken: TMS_SRV_TOKEN })
+    });
+    const data = await response.text();
+    const token = data.replace(/^"|"$/g, '').trim();
+    res.status(response.status).send(JSON.stringify(token));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.post('/rates', requireAuth, async (req, res) => {
+  try {
+    const token = req.headers['usertoken'] || '';
+    const rateBody = Object.assign({}, req.body, {
+      UsrToken: token,
+      SrvToken: TMS_SRV_TOKEN,
+      ProfileCode: process.env.TMS_PROFILE_CODE || '',
+      ClientCode: process.env.TMS_CLIENT_CODE || ''
+    });
+    const response = await fetch(TMS_BASE + '/ShipmentLiteService/GetLTLRates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(rateBody)
+    });
+    const data = await response.text();
+    res.status(response.status).send(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+ 
+app.post('/ups-rates', requireAuth, async (req, res) => {
+  try {
+    const { origZip, destZip, weight, length, width, height } = req.body;
+    const shipment = {
+      address_from: { zip: origZip, country: 'US' },
+      address_to: { zip: destZip, country: 'US' },
+      parcels: [{ length: String(length||12), width: String(width||12), height: String(height||12), distance_unit: 'in', weight: String(weight||1), mass_unit: 'lb' }],
+      async: false
     };
-    const res = await fetch('/rates', { method: 'POST', headers: authHeaders({ 'usertoken': authToken }), body: JSON.stringify(payload) });
-    if (!res.ok) {
-      if (res.status === 401) { authToken = null; throw new Error('Session expired — please try again.'); }
-      const txt = await res.text(); throw new Error('API error ' + res.status + ': ' + txt.slice(0,300));
+    let data, response;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      response = await fetch('https://api.goshippo.com/shipments/', {
+        method: 'POST',
+        headers: { 'Authorization': 'ShippoToken ' + SHIPPO_TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify(shipment)
+      });
+      data = await response.json();
+      if (!response.ok) return res.status(response.status).json({ error: data });
+      if ((data.rates||[]).filter(r => r.provider==='UPS').length > 0) break;
+      if (attempt < 4) await new Promise(r => setTimeout(r, 3000));
     }
-    const data = await res.json();
-    sb.classList.remove('show');
-    renderResults(data, orig, dest, sel.model, sel.weight, fclass);
-  } catch(e) {
-    sb.classList.remove('show');
-    err.textContent = e.message || 'Something went wrong. Please try again.';
-    err.style.display = 'block';
-  }
-  quoteBtn.disabled = false;
-}
- 
-function renderResults(data, orig, dest, model, weight, fclass) {
-  const list = document.getElementById('quoteList');
-  const meta = document.getElementById('resultsMeta');
-  list.innerHTML = '';
-  let quotes = [];
-  if (Array.isArray(data)) quotes = data;
-  else if (data.LeastCostCarriers) quotes = data.LeastCostCarriers;
-  else if (data.ContractResult) quotes = Array.isArray(data.ContractResult) ? data.ContractResult : [data.ContractResult];
-  else if (data.Rates) quotes = data.Rates;
-  else if (data.rates) quotes = data.rates;
-  else {
-    const raw = document.createElement('div');
-    raw.className = 'raw-response';
-    raw.textContent = 'Raw API response:\n' + JSON.stringify(data, null, 2).slice(0, 1000);
-    list.appendChild(raw);
-    document.getElementById('resultsBox').classList.add('show');
-    return;
-  }
-  quotes = quotes.filter(q => (q.TotalShipmentCost || q.GrossCharge || q.NetCharge || 0) > 0);
-  if (!quotes.length) {
-    list.innerHTML = '<div style="font-size:13px;color:#666;padding:12px;background:#f9f9f9;border-radius:8px;">No rates returned for this lane. Try adjusting freight class or contact your 3PL.</div>';
-    document.getElementById('resultsBox').classList.add('show'); return;
-  }
-  const markupPct = parseFloat(document.getElementById('markupRange').value || 10) / 100;
-  quotes.sort((a,b) => (a.TotalShipmentCost||a.TotalCharge||a.GrossCharge||0) - (b.TotalShipmentCost||b.TotalCharge||b.GrossCharge||0));
-  meta.textContent = orig + ' → ' + dest + ' · ' + quotes.length + ' carrier' + (quotes.length!==1?'s':'');
-  quotes.forEach((q, i) => {
-    const carrier = q.CarrierName||q.carrierName||q.Carrier||'—';
-    const rawTotal = q.TotalShipmentCost||q.TotalCharge||q.GrossCharge||q.grossCharge||0;
-    const accCharges = (q.AccessorialCharges||[]).reduce((sum,a) => sum+(a.Charge||a.Amount||0), 0);
-    const total = Math.max(0, rawTotal - accCharges) * (1 + markupPct) + accCharges;
-    const transit = q.TransitDays||q.transitDays||null;
-    const initials = carrier.split(' ').map(w=>w[0]).join('').slice(0,4).toUpperCase();
-    const card = document.createElement('div');
-    card.className = 'quote-card' + (i===0?' best':'');
-    card.innerHTML = `<div class="carrier-badge">${initials}</div>
-      <div><div class="carrier-name">${carrier}${i===0?'<span class="badge-best">lowest</span>':''}</div>
-      <div class="carrier-sub">${transit?transit+(transit===1?' day':' days'):''}</div></div>
-      <div class="price-col"><div class="price-total">$${total.toFixed(2)}</div><div class="price-label">contracted rate</div></div>`;
-    list.appendChild(card);
-  });
-  document.getElementById('resultsBox').classList.add('show');
-}
- 
-function renderUPSResults(rates, orig, dest, model, weight, markupPct) {
-  rates = rates.filter(r => r.token === 'ups_ground');
-  const list = document.getElementById('quoteList');
-  const meta = document.getElementById('resultsMeta');
-  list.innerHTML = '';
-  if (!rates.length) {
-    list.innerHTML = '<div style="font-size:13px;color:#666;padding:12px;background:#f9f9f9;border-radius:8px;">No UPS rates returned for this route.</div>';
-    document.getElementById('resultsBox').classList.add('show'); return;
-  }
-  meta.textContent = orig + ' → ' + dest + ' · ' + model + ' · ' + weight + ' lbs · UPS Parcel';
-  rates.forEach((r, i) => {
-    const card = document.createElement('div');
-    card.className = 'quote-card' + (i===0?' best':'');
-    const initials = r.service.split(' ').map(w=>w[0]).join('').slice(0,4).toUpperCase();
-    card.innerHTML = '<div class="carrier-badge">' + initials + '</div>' +
-      '<div><div class="carrier-name">' + r.service + (i===0?'<span class="badge-best">cheapest</span>':'') + '</div>' +
-      '<div class="carrier-sub">' + (r.days?r.days+(r.days===1?' business day':' business days'):'') + '</div></div>' +
-      '<div class="price-col"><div class="price-total">$' + (r.amount*(1+(markupPct||0))).toFixed(2) + '</div><div class="price-label">UPS rate</div></div>';
-    list.appendChild(card);
-  });
-  const note = document.createElement('div');
-  note.style.cssText = 'font-size:11px;color:#aaa;margin-top:8px;padding:8px 12px;background:#fafafa;border-radius:8px;';
-  note.textContent = 'UPS rates are standard estimates via Shippo. Actual rates may vary.';
-  list.appendChild(note);
-  document.getElementById('resultsBox').classList.add('show');
-}
- 
-function renderCombinedResults(upsRates, ltlData, orig, dest, model, weight, fclass, markupPct) {
-  const list = document.getElementById('quoteList');
-  const meta = document.getElementById('resultsMeta');
-  list.innerHTML = '';
-  function sectionHeader(title) {
-    const h = document.createElement('div');
-    h.style.cssText = 'font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.06em;margin:12px 0 6px;padding:0 2px;';
-    h.textContent = title; return h;
-  }
-  const upsGround = upsRates.filter(r => r.token === 'ups_ground');
-  if (upsGround.length) {
-    list.appendChild(sectionHeader('UPS Parcel'));
-    upsGround.forEach(r => {
-      const card = document.createElement('div');
-      card.className = 'quote-card';
-      card.innerHTML = '<div class="carrier-badge">UPS</div>' +
-        '<div><div class="carrier-name">UPS Ground</div>' +
-        '<div class="carrier-sub">' + (r.days?r.days+(r.days===1?' day':' days'):'') + '</div></div>' +
-        '<div class="price-col"><div class="price-total">$' + (r.amount*(1+markupPct)).toFixed(2) + '</div><div class="price-label">UPS rate</div></div>';
-      list.appendChild(card);
-    });
-  }
-  let ltlQuotes = [];
-  if (ltlData.LeastCostCarriers) ltlQuotes = ltlData.LeastCostCarriers;
-  ltlQuotes = ltlQuotes.filter(q => (q.TotalShipmentCost||q.GrossCharge||0) > 0);
-  ltlQuotes.sort((a,b) => (a.TotalShipmentCost||0) - (b.TotalShipmentCost||0));
-  if (ltlQuotes.length) {
-    list.appendChild(sectionHeader('LTL Freight'));
-    ltlQuotes.forEach((q, i) => {
-      const carrier = q.CarrierName||'—';
-      const rawTotal = q.TotalShipmentCost||q.GrossCharge||0;
-      const accCharges = (q.AccessorialCharges||[]).reduce((sum,a) => sum+(a.Charge||a.Amount||0), 0);
-      const total = Math.max(0, rawTotal - accCharges) * (1 + markupPct) + accCharges;
-      const transit = q.TransitDays||null;
-      const initials = carrier.split(' ').map(w=>w[0]).join('').slice(0,4).toUpperCase();
-      const card = document.createElement('div');
-      card.className = 'quote-card' + (i===0?' best':'');
-      card.innerHTML = '<div class="carrier-badge">' + initials + '</div>' +
-        '<div><div class="carrier-name">' + carrier + (i===0?'<span class="badge-best">lowest</span>':'') + '</div>' +
-        '<div class="carrier-sub">' + (transit?transit+(transit===1?' day':' days'):'') + '</div></div>' +
-        '<div class="price-col"><div class="price-total">$' + total.toFixed(2) + '</div><div class="price-label">contracted rate</div></div>';
-      list.appendChild(card);
-    });
-  }
-  meta.textContent = orig + ' → ' + dest + ' · ' + model + ' · ' + weight + ' lbs';
-  document.getElementById('resultsBox').classList.add('show');
-}
- 
-const freightUser = sessionStorage.getItem('freightUser');
-if (freightUser) document.getElementById('userLabel').textContent = freightUser;
-fetch('/api/equipment', { headers: authHeaders() }).then(r => {
-  if (r.ok && freightUser === 'DT') {
-    const el = document.getElementById('adminLink');
-    if (el) el.style.display = 'inline';
+    const UPS_SERVICES = { 'ups_ground':'UPS Ground','ups_3_day_select':'UPS 3-Day Select','ups_second_day_air':'UPS 2nd Day Air','ups_next_day_air_saver':'UPS Next Day Air Saver','ups_next_day_air':'UPS Next Day Air','ups_next_day_air_early_am':'UPS Next Day Air Early' };
+    const SERVICE_ORDER = ['ups_ground','ups_3_day_select','ups_second_day_air','ups_next_day_air_saver','ups_next_day_air','ups_next_day_air_early_am'];
+    const rates = (data.rates||[]).filter(r=>r.provider==='UPS'&&UPS_SERVICES[r.servicelevel.token]).map(r=>({ service:UPS_SERVICES[r.servicelevel.token], token:r.servicelevel.token, amount:parseFloat(r.amount), currency:r.currency, days:r.estimated_days })).sort((a,b)=>SERVICE_ORDER.indexOf(a.token)-SERVICE_ORDER.indexOf(b.token));
+    res.json({ rates });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
  
-async function doLogout() {
-  await fetch('/auth/logout', { method: 'POST', headers: authHeaders() });
-  sessionStorage.removeItem('freightToken');
-  sessionStorage.removeItem('freightUser');
-  window.location.href = '/';
-}
-</script>
-</body>
-</html>
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+ 
+initDB().then(() => app.listen(PORT, () => console.log('TMS proxy running on port ' + PORT)));

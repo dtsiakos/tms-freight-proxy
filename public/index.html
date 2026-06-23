@@ -117,19 +117,9 @@
     <!-- Pricing panel -->
     <div class="pricing-panel" id="pricingPanel">
       <div class="pricing-panel-title">Product pricing</div>
-      <div class="pricing-grid">
-        <div class="price-item cost">
-          <div class="price-item-label">Cost</div>
-          <div class="price-item-value no-price" id="priceCost">—</div>
-        </div>
-        <div class="price-item list">
-          <div class="price-item-label">List Price</div>
-          <div class="price-item-value no-price" id="priceList">—</div>
-        </div>
-        <div class="price-item net">
-          <div class="price-item-label">Net Price</div>
-          <div class="price-item-value no-price" id="priceNet">—</div>
-        </div>
+      <div id="priceCostWrap" style="display:flex;align-items:baseline;gap:8px;">
+        <span style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.04em;">Cost</span>
+        <span class="price-item-value no-price" id="priceCost">—</span>
       </div>
     </div>
  
@@ -229,8 +219,6 @@ async function loadEquipment() {
       upsWeight: r.ups_weight,
       upsDims: (r.ups_dim_l && r.ups_dim_w && r.ups_dim_h) ? r.ups_dim_l + 'x' + r.ups_dim_w + 'x' + r.ups_dim_h : null,
       cost: r.cost,
-      list_price: r.list_price,
-      net_price: r.net_price,
       freight_class: r.freight_class
     }));
   } catch(e) { console.error('Failed to load equipment:', e); }
@@ -294,18 +282,6 @@ function fmtPrice(val) {
   return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
  
-function setPriceEl(elId, val) {
-  const el = document.getElementById(elId);
-  const formatted = fmtPrice(val);
-  if (formatted) {
-    el.textContent = formatted;
-    el.className = 'price-item-value';
-  } else {
-    el.textContent = '—';
-    el.className = 'price-item-value no-price';
-  }
-}
- 
 function pick(item) {
   sel = item;
   modelInput.value = item.model;
@@ -337,10 +313,18 @@ function pick(item) {
     fclassEl.value = defaultFreightClass;
   }
  
-  // Pricing panel — always show when a model is selected, populate what we have
-  setPriceEl('priceCost', item.cost);
-  setPriceEl('priceList', item.list_price);
-  setPriceEl('priceNet', item.net_price);
+  // Pricing panel — show cost if available
+  const costEl = document.getElementById('priceCost');
+  const formatted = fmtPrice(item.cost);
+  if (formatted) {
+    costEl.textContent = formatted;
+    costEl.className = 'price-item-value';
+    costEl.style.color = '#b91c1c';
+  } else {
+    costEl.textContent = '—';
+    costEl.className = 'price-item-value no-price';
+    costEl.style.color = '';
+  }
   document.getElementById('pricingPanel').classList.add('show');
  
   // Freight class enabled/disabled for UPS

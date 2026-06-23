@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +38,7 @@
   .price-item { text-align: center; }
   .price-item-label { font-size: 10px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
   .price-item-value { font-size: 16px; font-weight: 700; color: #1a1a1a; }
-  .price-item-value.no-price { font-size: 13px; font-weight: 400; color: #ccc; }
+  .price-item-value.no-price { font-size: 13px; font-weight: 400; color: #ccc; font-style: italic; }
   .price-item.cost .price-item-value { color: #b91c1c; }
   .price-item.list .price-item-value { color: #0077AA; }
   .price-item.net .price-item-value { color: #166534; }
@@ -78,16 +79,12 @@
   .api-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border-radius: 20px; padding: 4px 10px; margin-bottom: 14px; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-weight: 500; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; }
   .raw-response { font-size: 12px; color: #666; background: #f5f5f5; border-radius: 8px; padding: 10px 12px; font-family: monospace; word-break: break-all; margin-top: 8px; white-space: pre-wrap; }
-  @media (max-width: 480px) {
-    .grid3 { grid-template-columns: 1fr 1fr 1fr; }
-    .acc-grid { grid-template-columns: 1fr; }
-    .pricing-grid { grid-template-columns: repeat(3, 1fr); }
-  }
+  @media (max-width: 480px) { .acc-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;">
     <div>
       <img src="/logo.png" alt="Univex" style="height:48px;margin-bottom:10px;display:block;" onerror="this.style.display='none'" />
       <h1 style="font-size:22px;font-weight:600;">Freight quote tool</h1>
@@ -117,21 +114,21 @@
       <span class="loaded-tag" id="tagOk">Specs loaded</span>
     </div>
  
-    <!-- Pricing panel — shown when a model with pricing is selected -->
+    <!-- Pricing panel -->
     <div class="pricing-panel" id="pricingPanel">
       <div class="pricing-panel-title">Product pricing</div>
       <div class="pricing-grid">
         <div class="price-item cost">
           <div class="price-item-label">Cost</div>
-          <div class="price-item-value" id="priceCost">—</div>
+          <div class="price-item-value no-price" id="priceCost">—</div>
         </div>
         <div class="price-item list">
           <div class="price-item-label">List Price</div>
-          <div class="price-item-value" id="priceList">—</div>
+          <div class="price-item-value no-price" id="priceList">—</div>
         </div>
         <div class="price-item net">
           <div class="price-item-label">Net Price</div>
-          <div class="price-item-value" id="priceNet">—</div>
+          <div class="price-item-value no-price" id="priceNet">—</div>
         </div>
       </div>
     </div>
@@ -178,12 +175,9 @@
     <div class="field" style="margin-bottom:10px;max-width:160px;">
       <select id="markupRange">
         <option value="0">0% — no markup</option>
-        <option value="5">5%</option>
-        <option value="10">10%</option>
-        <option value="15" selected>15%</option>
-        <option value="20">20%</option>
-        <option value="25">25%</option>
-        <option value="30">30%</option>
+        <option value="5">5%</option><option value="10">10%</option>
+        <option value="15" selected>15%</option><option value="20">20%</option>
+        <option value="25">25%</option><option value="30">30%</option>
       </select>
     </div>
     <div class="divider"></div>
@@ -213,16 +207,13 @@
  
 <script>
 (function() {
-  const token = sessionStorage.getItem('freightToken');
-  if (!token) window.location.href = '/';
+  if (!sessionStorage.getItem('freightToken')) window.location.href = '/';
 })();
  
-window.addEventListener('DOMContentLoaded', () => {
-  loadEquipment();
-  loadSettings();
-});
+window.addEventListener('DOMContentLoaded', () => { loadEquipment(); loadSettings(); });
  
 let EQ = [];
+let defaultFreightClass = '70';
  
 async function loadEquipment() {
   try {
@@ -239,7 +230,8 @@ async function loadEquipment() {
       upsDims: (r.ups_dim_l && r.ups_dim_w && r.ups_dim_h) ? r.ups_dim_l + 'x' + r.ups_dim_w + 'x' + r.ups_dim_h : null,
       cost: r.cost,
       list_price: r.list_price,
-      net_price: r.net_price
+      net_price: r.net_price,
+      freight_class: r.freight_class
     }));
   } catch(e) { console.error('Failed to load equipment:', e); }
 }
@@ -249,18 +241,19 @@ async function loadSettings() {
     const res = await fetch('/api/settings', { headers: authHeaders() });
     if (!res.ok) return;
     const settings = await res.json();
-    const defaultZip = settings.default_origin_zip || '03079';
-    document.getElementById('origZip').value = defaultZip;
-    document.getElementById('origNote').textContent = defaultZip === '03079' ? 'Salem, NH (default)' : '';
-    const defaultClass = settings.default_freight_class || '70';
-    document.getElementById('fclass').value = defaultClass;
+    const zip = settings.default_origin_zip || '03079';
+    document.getElementById('origZip').value = zip;
+    document.getElementById('origNote').textContent = zip === '03079' ? 'Salem, NH (default)' : '';
+    defaultFreightClass = settings.default_freight_class || '70';
+    document.getElementById('fclass').value = defaultFreightClass;
   } catch(e) { console.error('Failed to load settings:', e); }
 }
  
-const CREDS = { userName: 'RatingTool', password: 'Test_Admin@12', srvToken: '' };
 function authHeaders(extra) {
   return Object.assign({ 'Content-Type': 'application/json', 'x-session-token': sessionStorage.getItem('freightToken') || '' }, extra || {});
 }
+ 
+const CREDS = { userName: 'RatingTool', password: 'Test_Admin@12', srvToken: '' };
 let sel = null, hiIdx = -1, authToken = null;
  
 const modelInput = document.getElementById('modelInput');
@@ -296,7 +289,21 @@ function onType() {
  
 function fmtPrice(val) {
   if (val === null || val === undefined || val === '') return null;
-  return '$' + parseFloat(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const n = parseFloat(val);
+  if (isNaN(n)) return null;
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+ 
+function setPriceEl(elId, val) {
+  const el = document.getElementById(elId);
+  const formatted = fmtPrice(val);
+  if (formatted) {
+    el.textContent = formatted;
+    el.className = 'price-item-value';
+  } else {
+    el.textContent = '—';
+    el.className = 'price-item-value no-price';
+  }
 }
  
 function pick(item) {
@@ -308,6 +315,7 @@ function pick(item) {
   document.getElementById('dimW').value = p[1] || '';
   document.getElementById('dimH').value = p[2] || '';
  
+  // Spec tags
   if (item.weight && item.dims) {
     document.getElementById('tagW').textContent = item.weight + ' lbs';
     document.getElementById('tagW').classList.add('show');
@@ -321,29 +329,21 @@ function pick(item) {
     document.getElementById('tagOk').classList.remove('show');
   }
  
-  // Show pricing panel if any price data exists
-  const hasPricing = item.cost || item.list_price || item.net_price;
-  const panel = document.getElementById('pricingPanel');
-  if (hasPricing) {
-    const costVal = fmtPrice(item.cost);
-    const listVal = fmtPrice(item.list_price);
-    const netVal = fmtPrice(item.net_price);
-    const costEl = document.getElementById('priceCost');
-    const listEl = document.getElementById('priceList');
-    const netEl = document.getElementById('priceNet');
-    costEl.textContent = costVal || '—';
-    costEl.className = 'price-item-value' + (costVal ? '' : ' no-price');
-    listEl.textContent = listVal || '—';
-    listEl.className = 'price-item-value' + (listVal ? '' : ' no-price');
-    netEl.textContent = netVal || '—';
-    netEl.className = 'price-item-value' + (netVal ? '' : ' no-price');
-    panel.classList.add('show');
+  // Set freight class — use item-specific class if set, otherwise fall back to default
+  const fclassEl = document.getElementById('fclass');
+  if (item.freight_class) {
+    fclassEl.value = item.freight_class;
   } else {
-    panel.classList.remove('show');
+    fclassEl.value = defaultFreightClass;
   }
  
-  const liftgateEl = document.querySelector('.acc-item[data-val="LGD"]');
-  const fclassEl = document.getElementById('fclass');
+  // Pricing panel — always show when a model is selected, populate what we have
+  setPriceEl('priceCost', item.cost);
+  setPriceEl('priceList', item.list_price);
+  setPriceEl('priceNet', item.net_price);
+  document.getElementById('pricingPanel').classList.add('show');
+ 
+  // Freight class enabled/disabled for UPS
   if (item.carrier === 'ups') {
     fclassEl.disabled = true;
     fclassEl.style.opacity = '0.4';
@@ -354,6 +354,8 @@ function pick(item) {
     fclassEl.style.cursor = 'pointer';
   }
  
+  // Accessorials
+  const liftgateEl = document.querySelector('.acc-item[data-val="LGD"]');
   if (item.carrier === 'ups') {
     document.getElementById('accSection').style.display = 'none';
   } else {
@@ -378,6 +380,7 @@ function clearSpecs() {
   ['tagW','tagD','tagOk'].forEach(id => document.getElementById(id).classList.remove('show'));
   ['weight','dimL','dimW','dimH'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('pricingPanel').classList.remove('show');
+  document.getElementById('fclass').value = defaultFreightClass;
 }
  
 function closeDd() { dd.style.display = 'none'; hiIdx = -1; modelInput.blur(); }
@@ -410,7 +413,6 @@ async function getQuotes() {
   if (!sel) { err.textContent = 'Please select a model from the dropdown.'; err.style.display = 'block'; return; }
   const dest = document.getElementById('destZip').value.trim();
   if (!dest || dest.length !== 5 || isNaN(dest)) { err.textContent = 'Please enter a valid 5-digit destination zip.'; err.style.display = 'block'; return; }
- 
   if (sel.carrier !== 'ups' && sel.carrier !== 'both' && (!sel.weight || !sel.dims)) {
     err.textContent = 'Specs not yet available for this model — cannot generate a quote.';
     err.style.display = 'block'; return;
@@ -423,10 +425,9 @@ async function getQuotes() {
   const pallets = parseInt(document.getElementById('pallets').value) || 1;
   const p = sel.dims ? sel.dims.split('x') : [];
   const accs = Array.from(document.querySelectorAll('.acc-item.checked')).map(el => el.dataset.val);
+  const markupPct = parseFloat(document.getElementById('markupRange').value || 15) / 100;
  
   try {
-    const markupPct = parseFloat(document.getElementById('markupRange')?.value || 15) / 100;
- 
     if (sel.carrier === 'ups' || sel.carrier === 'both') {
       st.textContent = sel.carrier === 'both' ? 'Fetching UPS & LTL rates...' : 'Fetching UPS rates...';
       const upsWeight = sel.upsWeight || sel.weight;
@@ -437,20 +438,17 @@ async function getQuotes() {
       });
       if (!upsRes.ok) { const txt = await upsRes.text(); throw new Error('UPS API error ' + upsRes.status + ': ' + txt.slice(0,200)); }
       const upsData = await upsRes.json();
- 
       if (sel.carrier === 'ups') {
         sb.classList.remove('show');
         renderUPSResults(upsData.rates || [], orig, dest, sel.model, sel.weight, markupPct);
         quoteBtn.disabled = false; return;
       }
- 
       if (!authToken) { st.textContent = 'Authenticating with TMS...'; authToken = await getToken(); }
       st.textContent = 'Fetching LTL rates...';
       const ltlPayload = {
         OrigZip: orig, OrigCity: '', OrigState: '', OrigCountry: 'US',
         DestZip: dest, DestCity: '', DestState: '', DestCountry: 'US',
-        ShipmentDate: new Date().toISOString().split('T')[0],
-        UserToken: authToken,
+        ShipmentDate: new Date().toISOString().split('T')[0], UserToken: authToken,
         Shipments: [{ Description: sel.model, Pallets: pallets, Pieces: pallets, Weight: sel.weight, Class: fclass, Length: parseFloat(p[0])||0, Width: parseFloat(p[1])||0, Height: parseFloat(p[2])||0, IsHazmat: false, IsStackable: false }],
         AccessorialCodes: accs
       };
@@ -467,16 +465,13 @@ async function getQuotes() {
  
     if (!authToken) { st.textContent = 'Authenticating with TMS...'; authToken = await getToken(); }
     st.textContent = 'Fetching your contracted rates...';
- 
     const payload = {
       OrigZip: orig, OrigCity: '', OrigState: '', OrigCountry: 'US',
       DestZip: dest, DestCity: '', DestState: '', DestCountry: 'US',
-      ShipmentDate: new Date().toISOString().split('T')[0],
-      UserToken: authToken,
+      ShipmentDate: new Date().toISOString().split('T')[0], UserToken: authToken,
       Shipments: [{ Description: sel.model, Pallets: pallets, Pieces: pallets, Weight: sel.weight, Class: fclass, Length: parseFloat(p[0])||0, Width: parseFloat(p[1])||0, Height: parseFloat(p[2])||0, IsHazmat: false, IsStackable: false }],
       AccessorialCodes: accs
     };
- 
     const res = await fetch('/rates', { method: 'POST', headers: authHeaders({ 'usertoken': authToken }), body: JSON.stringify(payload) });
     if (!res.ok) {
       if (res.status === 401) { authToken = null; throw new Error('Session expired — please try again.'); }
@@ -514,39 +509,30 @@ function renderResults(data, orig, dest, model, weight, fclass) {
   quotes = quotes.filter(q => (q.TotalShipmentCost || q.GrossCharge || q.NetCharge || 0) > 0);
   if (!quotes.length) {
     list.innerHTML = '<div style="font-size:13px;color:#666;padding:12px;background:#f9f9f9;border-radius:8px;">No rates returned for this lane. Try adjusting freight class or contact your 3PL.</div>';
-    document.getElementById('resultsBox').classList.add('show');
-    return;
+    document.getElementById('resultsBox').classList.add('show'); return;
   }
-  const markupPct = parseFloat(document.getElementById('markupRange')?.value || 10) / 100;
+  const markupPct = parseFloat(document.getElementById('markupRange').value || 10) / 100;
   quotes.sort((a,b) => (a.TotalShipmentCost||a.TotalCharge||a.GrossCharge||0) - (b.TotalShipmentCost||b.TotalCharge||b.GrossCharge||0));
   meta.textContent = orig + ' → ' + dest + ' · ' + quotes.length + ' carrier' + (quotes.length!==1?'s':'');
   quotes.forEach((q, i) => {
     const carrier = q.CarrierName||q.carrierName||q.Carrier||'—';
     const rawTotal = q.TotalShipmentCost||q.TotalCharge||q.GrossCharge||q.grossCharge||0;
     const accCharges = (q.AccessorialCharges||[]).reduce((sum,a) => sum+(a.Charge||a.Amount||0), 0);
-    const freightOnly = Math.max(0, rawTotal - accCharges);
-    const total = freightOnly * (1 + markupPct) + accCharges;
+    const total = Math.max(0, rawTotal - accCharges) * (1 + markupPct) + accCharges;
     const transit = q.TransitDays||q.transitDays||null;
     const initials = carrier.split(' ').map(w=>w[0]).join('').slice(0,4).toUpperCase();
     const card = document.createElement('div');
     card.className = 'quote-card' + (i===0?' best':'');
-    card.innerHTML = `
-      <div class="carrier-badge">${initials}</div>
-      <div>
-        <div class="carrier-name">${carrier}${i===0?'<span class="badge-best">lowest</span>':''}</div>
-        <div class="carrier-sub">${transit?transit+(transit===1?' day':' days'):''}</div>
-      </div>
-      <div class="price-col">
-        <div class="price-total">$${total.toFixed(2)}</div>
-        <div class="price-label">contracted rate</div>
-      </div>`;
+    card.innerHTML = `<div class="carrier-badge">${initials}</div>
+      <div><div class="carrier-name">${carrier}${i===0?'<span class="badge-best">lowest</span>':''}</div>
+      <div class="carrier-sub">${transit?transit+(transit===1?' day':' days'):''}</div></div>
+      <div class="price-col"><div class="price-total">$${total.toFixed(2)}</div><div class="price-label">contracted rate</div></div>`;
     list.appendChild(card);
   });
   document.getElementById('resultsBox').classList.add('show');
 }
  
 function renderUPSResults(rates, orig, dest, model, weight, markupPct) {
-  markupPct = markupPct || 0;
   rates = rates.filter(r => r.token === 'ups_ground');
   const list = document.getElementById('quoteList');
   const meta = document.getElementById('resultsMeta');
@@ -563,7 +549,7 @@ function renderUPSResults(rates, orig, dest, model, weight, markupPct) {
     card.innerHTML = '<div class="carrier-badge">' + initials + '</div>' +
       '<div><div class="carrier-name">' + r.service + (i===0?'<span class="badge-best">cheapest</span>':'') + '</div>' +
       '<div class="carrier-sub">' + (r.days?r.days+(r.days===1?' business day':' business days'):'') + '</div></div>' +
-      '<div class="price-col"><div class="price-total">$' + (r.amount*(1+markupPct)).toFixed(2) + '</div><div class="price-label">UPS rate</div></div>';
+      '<div class="price-col"><div class="price-total">$' + (r.amount*(1+(markupPct||0))).toFixed(2) + '</div><div class="price-label">UPS rate</div></div>';
     list.appendChild(card);
   });
   const note = document.createElement('div');
@@ -577,7 +563,6 @@ function renderCombinedResults(upsRates, ltlData, orig, dest, model, weight, fcl
   const list = document.getElementById('quoteList');
   const meta = document.getElementById('resultsMeta');
   list.innerHTML = '';
-  markupPct = markupPct || 0;
   function sectionHeader(title) {
     const h = document.createElement('div');
     h.style.cssText = 'font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.06em;margin:12px 0 6px;padding:0 2px;';

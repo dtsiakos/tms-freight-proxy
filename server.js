@@ -55,6 +55,78 @@ function requireAdmin(req, res, next) {
   }
 }
  
+// ---------------------------------------------------------------------------
+// RIST regional-carrier filter
+// RIST only serves the Northeast, so it should only be quoted when the ship-to
+// ZIP is in ME, NH, VT, CT, RI, NJ, or NY. Ranges are the first 3 ZIP digits.
+// ---------------------------------------------------------------------------
+const RIST_ZIP_RANGES = [
+  [28, 29],    // RI
+  [30, 38],    // NH
+  [39, 49],    // ME
+  [50, 59],    // VT
+  [60, 69],    // CT
+  [70, 89],    // NJ
+  [100, 149],  // NY
+];
+ 
+function isRistEligibleZip(zip) {
+  const digits = String(zip == null ? '' : zip).replace(/\D/g, '');
+  if (digits.length < 3) return false;
+  // Restore a likely-dropped leading zero (New England ZIPs start with 0).
+  const five = digits.length >= 5 ? digits.slice(0, 5) : digits.padStart(5, '0');
+  const prefix = parseInt(five.slice(0, 3), 10);
+  return RIST_ZIP_RANGES.some(([lo, hi]) => prefix >= lo && prefix <= hi);
+}
+ 
+// Pull the destination ZIP out of the /rates request body. The front end may
+// send it under any of several names, so check the common ones, then fall back
+// to a fuzzy match on any key that looks like a destination ZIP/postal field.
+function getDestZipFromBody(body) {
+  if (!body || typeof body !== 'object') return '';
+  const explicit = ['destZip', 'DestZip', 'destinationZip', 'DestinationZip',
+    'destPostal', 'DestPostal', 'DestPostalCode', 'DestinationPostalCode',
+    'DestinationPostal', 'toZip', 'ToZip', 'consigneeZip', 'ConsigneeZip',
+    'ConsigneePostalCode'];
+  for (const k of explicit) {
+    if (body[k] != null && String(body[k]).trim() !== '') return String(body[k]);
+  }
+  for (const k of Object.keys(body)) {
+    const lk = k.toLowerCase();
+    const looksDest = lk.includes('dest') || lk.includes('consignee') || lk.startsWith('to');
+    const looksZip = lk.includes('zip') || lk.includes('postal');
+    if (looksDest && looksZip && body[k] != null && String(body[k]).trim() !== '') {
+      return String(body[k]);
+    }
+  }
+  return '';
+}
+ 
+// Match RIST as a whole word so names like "Christensen" or "Bristol" are safe.
+const RIST_MATCH = /\bRIST\b/i;
+ 
+function objectMentionsRist(el) {
+  if (!el || typeof el !== 'object') return false;
+  for (const k of Object.keys(el)) {
+    const v = el[k];
+    if (typeof v === 'string' && RIST_MATCH.test(v)) return true;
+  }
+  return false;
+}
+ 
+// Recursively remove any array element whose carrier/SCAC field names RIST.
+function stripRist(node) {
+  if (Array.isArray(node)) {
+    return node.filter(el => !objectMentionsRist(el)).map(stripRist);
+  }
+  if (node && typeof node === 'object') {
+    const out = {};
+    for (const k of Object.keys(node)) out[k] = stripRist(node[k]);
+    return out;
+  }
+  return node;
+}
+ 
 async function initDB() {
   if (!pool) return;
   try {
@@ -260,6 +332,22 @@ app.post('/rates', requireAuth, async (req, res) => {
       body: JSON.stringify(rateBody)
     });
     const data = await response.text();
+ 
+    // RIST only serves the Northeast. If the destination is outside its service
+    // area, strip it from the results; otherwise pass the response through as-is.
+    const destZip = getDestZipFromBody(req.body);
+    if (destZip && !isRistEligibleZip(destZip)) {
+      try {
+        const parsed = JSON.parse(data);
+        return res.status(response.status).json(stripRist(parsed));
+      } catch (e) {
+        // Not JSON we can parse (e.g. an error string) — pass through untouched.
+        return res.status(response.status).send(data);
+      }
+    }
+    if (!destZip) {
+      console.warn('RIST filter: no destination ZIP found in /rates body; passing rates through unfiltered. Body keys:', Object.keys(req.body || {}).join(', '));
+    }
     res.status(response.status).send(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -299,3 +387,4 @@ app.post('/ups-rates', requireAuth, async (req, res) => {
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
  
 initDB().then(() => app.listen(PORT, () => console.log('TMS proxy running on port ' + PORT)));
+ 
